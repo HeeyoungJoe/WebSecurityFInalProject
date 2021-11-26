@@ -4,7 +4,7 @@ f = open('./data.libsvm', 'r')
 lines = f.readlines()
 for line in lines:
 	
-	minus_list = [-1]*3639
+	minus_list = [-1]*275
 	
 	l = line.split(' #')[0]
 	l = l.split(' ')
