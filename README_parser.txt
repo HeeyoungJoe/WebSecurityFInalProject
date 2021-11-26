@@ -27,11 +27,12 @@ objectives- several file
 - remainder_count: default None
 - batch_data: if file number less than threshold k, combine all data 
 into one big numpy instance (2D데이터들이라면 3D로 모음)
+- batch_target: data에 매칭되는 target만 모은 pandas dataframe
 
 <methods>
 - parse(self): parse all data in path
 - parse_single(self,filename): parse single data (used in parse)
-- pad(self, n): pad columns of all files
+- pad_row(self, n): pad columns of all files
 - rebatch(self,n): return a numpy object with all numpy matrices combined
 (1) concatenate
 (2) split in size n (default 1)

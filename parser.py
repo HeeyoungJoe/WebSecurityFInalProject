@@ -25,11 +25,7 @@ class MyDocument:
         self.size=(len(self.X),len(self.X.columns))
         self.filename=filename
 
-    '''
-    method
-    - to_vector(self): dataframe X, Y to numpy array 
-    returns npX, npY
-    '''
+
 
 class MyParser:
     #make sure to print
@@ -115,9 +111,13 @@ class MyParser:
         if tmp%new_batch_size!=0:
             self.pad_row(tmp%new_batch_size)
         
-        self.batch_count=int(tmp/new_batch_size)
-        self.batch_data=np.resize(self.batch_data,(self.batch_count,new_batch_size,self.max_ft))
-        self.batch_target=np.resize(self.batch_target,(self.batch_count,new_batch_size,1))       
-        
+        #그냥 숫자 변수 챙기기
         self.batch_size=new_batch_size
+        self.batch_count=int(tmp/new_batch_size)
+        #데이터 변수 챙기기
+        self.batch_data=np.resize(self.batch_data,(self.batch_count,new_batch_size,self.max_ft))
+        #need work
+        #y는 pandas dataframe이라 이렇게 resize하지 않는다. 
+        self.batch_target=np.resize(self.batch_target,(self.batch_count,new_batch_size,1))       
+    
         
