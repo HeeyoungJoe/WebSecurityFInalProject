@@ -32,7 +32,7 @@ into one big numpy instance (2D데이터들이라면 3D로 모음)
 - parse(self): parse all data in path
 - parse_single(self,filename): parse single data (used in parse)
 - pad(self, n): pad columns of all files
-- batch(self,n): return a numpy object with all numpy matrices combined
+- rebatch(self,n): return a numpy object with all numpy matrices combined
 (1) concatenate
 (2) split in size n (default 1)
 (3) comment batch size, batch count, remainder count
