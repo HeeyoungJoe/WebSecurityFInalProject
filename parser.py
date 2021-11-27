@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from os import listdir
-
+import time
 class MyDocument:
     '''
     csv file into structure below
@@ -15,9 +15,9 @@ class MyDocument:
     def __init__(self,data,filename):
         self.data=data
         #2D일 것을 가정
-        self.X=self.data.loc[:,1:]#dataframe
+        self.X=self.data.iloc[:,1:]#dataframe
         #need work 여기는 M, B임 
-        self.Y=self.data.loc[:,0]#dataframe 
+        self.Y=self.data.iloc[:,0]#dataframe 
         #X의 행x열 tuple
         self.size=(len(self.X),len(self.X.columns))
         self.filename=filename
@@ -42,10 +42,10 @@ class MyParser:
         self.path=path
         self.file_history=[]
         self.batch_count=1
-        batch_data=None
-        batch_target=None
-        max_ft=0
-        batch_size=0
+        self.batch_data=None
+        self.batch_target=None
+        self.max_ft=0
+        self.batch_size=0
     
     '''
     methods
@@ -69,24 +69,25 @@ class MyParser:
         #feature의 개수는 행*열 사이즈인 batch_size에서 행 사이즈와 같은 batch_target의 사이즈를 나누면 된다.
         #딱 처음에 한 번만 구해주면 된다. 
         self.max_ft=int(self.batch_size/self.batch_target.size)
-
+        '''
         #batch data 와 batch target size 조정
         self.batch_data.resize((self.batch_count,int(self.batch_size/self.max_ft),self.max_ft))
         self.batch_target.resize((self.batch_count,self.batch_size,1))
-
+        '''
         #alarm
-        print("\n|||Parsed Result:\n|||Document count:\t%d\n|||Batch_size:\t%d\n|||Batch_count:\t%d\n"%(len(self.file_history),self.batch_size,self.batch_count))
+        print("\n|||Parsed Result:\n|||Document count:\t%d\n|||Batch_size:\t%d\n|||Batch_count:\t%d\n"%(len(self.file_history),self.batch_data.size,self.batch_count))
         print("call (instance).batch_data for train input(numpy array of size: [.batch_count,.batch_size,.max_ft])\n and (instance).batch_target for train output (numpy array of size: [.batch_count,.batch_size,1])")
     def parse_single(self,filename):
         data=pd.read_csv(self.path+'/'+filename) #csv 파일 읽기
         parsed=MyDocument(data,filename) #MyDocument 오브젝트로 변환
-        self.file_hisory.append(parsed) #변환 완성된 fd를 file_history에 저장
+        self.file_history.append(parsed) #변환 완성된 fd를 file_history에 저장
 
         #numpy dataset 만들기
         # 모든 파일의 열 개수가 같다고 가정하고 있다. 
         #X
         if self.batch_data==None:
             self.batch_data=parsed.X.to_numpy()
+            print("\nFirst batch data in!...size%d\n"%self.batch_data.size)
             #한 csv 파일에는 여러 pdf 파일에 대한 벡터가 있다. 그래서 이미 2D ndarray일 것이다.        
         else:
             self.batch_data=np.concatenate((self.batch_data,parsed.X.to_numpy))
@@ -95,6 +96,7 @@ class MyParser:
         #string numpy array 가능하다.
         if self.batch_target==None:
             self.batch_target=parsed.Y.to_numpy()
+            print("\nFirst batch target in!...size %d\n"%self.batch_target.size)
         else:
             self.batch_target=np.concatenate((self.batch_target,parsed.Y.to_numpy()))
 
@@ -111,12 +113,12 @@ class MyParser:
         '''
         cut=old_size%new_size
         if self.batch_count==1: #one big batch
-            self.batch_data=self.batch_data[:old_size-cut,:]
-            self.batch_target=self.batch_target.loc[:old_size-cut,:]
+            self.batch_data=self.batch_data[:self.batch_data.size-cut]
+            self.batch_target=self.batch_target[:self.batch_target.size-cut]
         elif self.batch_count>1:#several batch
             leave=int(old_size/new_size)
             self.batch_data=self.batch_data[:leave,:,:]
-            self.batch_target=self.batch_target.loc[:leave,:,:]
+            self.batch_target=self.batch_target[:leave,:,:]
 
     
     def rebatch(self,new_batch_size):
@@ -129,9 +131,22 @@ class MyParser:
         self.batch_size=new_batch_size
         self.batch_count=int(tmp/new_batch_size)
         #데이터 변수 챙기기
-        self.batch_data.resize((self.batch_count,self.batch_size,self.max_ft))
-        self.batch_target.resize((self.batch_count,self.batch_size))    
+        self.batch_data=np.resize(self.batch_data,(self.batch_count,self.batch_size,self.max_ft)) #need work 
+        self.batch_target=np.resize(self.batch_target,(self.batch_count,self.batch_size))    
 
         print("\n|||Batch size updated: [%d,%d,%d]"%(self.batch_count,self.batch_size,self.max_ft))   
     
         
+if __name__=='__main__':
+    a=MyParser('./pdf2csv/testcsv')
+    parse_start=time.time()
+    a.parse()
+    parse_end=time.time()
+
+    print("\n\nTime spent:",parse_start-parse_end)
+
+    print("\n\nSneak peek into data:\n")
+    print(a.batch_data[:1,:5])
+    print(a.batch_target[:5])
+
+    a.rebatch(10000)
