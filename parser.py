@@ -3,9 +3,6 @@ import numpy as np
 from os import listdir
 
 class MyDocument:
-    #make sure to print
-    #--> alarm parsing done
-
     '''
     csv file into structure below
 
@@ -35,17 +32,16 @@ class MyParser:
     '''
     path into structure below
     
-    - group of MyDocument instances
+    - file_history: list of MyDocument instances
     - batch_size=number of files
-    - batch_count=1
-    - remainder_count=0
-    - batch_data: one big numpy instance
+    - batch_count=1 -->rebatch 후에는 batch count 를 의미함
+    - batch_data: one big numpy instance -->rebatch 후에는 하나의 batch row size를 의미함
+    - batch_target: target numpy instance
     '''
     def __init__(self,path):
         self.path=path
         self.file_history=[]
         self.batch_count=1
-        self.remainder_count=0
         batch_data=None
         batch_target=None
         max_ft=0
@@ -56,68 +52,86 @@ class MyParser:
     
     - parse(self): parse all data in path
     - parse_single(self,filename): parse single data (used in parse)
-    - pad(self, n): pad columns of all files
-    - rebatch(self,new_batch_size): return a numpy object with all numpy matrices combined
-    (1) concatenate
-    (2) split in size n (default 1)
-    (3) comment batch size, batch count, remainder count
+    - pad_row(self, n): pad columns of all files
+    - rebatch(self,n): return a numpy object with all numpy matrices combined
+    (1) 만약 새 batch 사이즈로 현재 있는 row 개수가 나누어 떨어지지 않으면 pad_row를 실행한다.
+    (2) resize data&target
+    (3) update batch size, batch count, remainder count
     '''
     def parse(self): #딱 한 번만 맨 처음에 실행됨을 가정한다. -->그래야지 batch_count=1인 상황만 고려할 수 있다.
         for filename in listdir(self.path):
             self.parse_single(filename)
-    
+        #행*열 사이즈다. 
+        #parse는 시작시 한번만 이뤄지므로 batch_count는 이 함수가 실행될 때 항상 1이다.
+        #따라서 batch_size는 모든 파일 파싱이 이뤄진 후 딱 한번만 실행되면 된다. 
+        self.batch_size=self.batch_data.size 
+        
+        #feature의 개수는 행*열 사이즈인 batch_size에서 행 사이즈와 같은 batch_target의 사이즈를 나누면 된다.
+        #딱 처음에 한 번만 구해주면 된다. 
+        self.max_ft=int(self.batch_size/self.batch_target.size)
+
+        #batch data 와 batch target size 조정
+        self.batch_data.resize((self.batch_count,int(self.batch_size/self.max_ft),self.max_ft))
+        self.batch_target.resize((self.batch_count,self.batch_size,1))
+
+        #alarm
+        print("\n|||Parsed Result:\n|||Document count:\t%d\n|||Batch_size:\t%d\n|||Batch_count:\t%d\n"%(len(self.file_history),self.batch_size,self.batch_count))
+        print("call (instance).batch_data for train input(numpy array of size: [.batch_count,.batch_size,.max_ft])\n and (instance).batch_target for train output (numpy array of size: [.batch_count,.batch_size,1])")
     def parse_single(self,filename):
         data=pd.read_csv(self.path+'/'+filename) #csv 파일 읽기
         parsed=MyDocument(data,filename) #MyDocument 오브젝트로 변환
         self.file_hisory.append(parsed) #변환 완성된 fd를 file_history에 저장
 
         #numpy dataset 만들기
-        #default으로 하나의 numpy object 
-        # --> 차원: ((파일 개수)*(행 개수))x(열 개수)
         # 모든 파일의 열 개수가 같다고 가정하고 있다. 
-        #pad시 변경 -->필터링 필요
         #X
         if self.batch_data==None:
-            self.batch_data=parsed.X.to_numpy
-            #pad시 변경--> max 구하는 식 
-            self.max_ft=parsed.size[1] #모든 파일의 열 개수가 같다고 가정하고 있다. 
+            self.batch_data=parsed.X.to_numpy()
+            #한 csv 파일에는 여러 pdf 파일에 대한 벡터가 있다. 그래서 이미 2D ndarray일 것이다.        
         else:
-            self.batch_data.append(parsed.X.to_numpy,axis=0)
+            self.batch_data=np.concatenate((self.batch_data,parsed.X.to_numpy))
+              
         #Y
-        #need work 
-        #SVC allows target to be dataframe,RF는 y를 안쓴다. 다른 알고리즘은 모른다.
+        #string numpy array 가능하다.
         if self.batch_target==None:
-            self.batch_target=parsed.Y
+            self.batch_target=parsed.Y.to_numpy()
         else:
-            #need work
-            #제대로 1:batch_size 인지 확인해야한다. 
-            self.batch_target.append(parsed.Y)
+            self.batch_target=np.concatenate((self.batch_target,parsed.Y.to_numpy()))
 
-        self.batch_size+=parsed.size[0]
-    def pad_row(self,n): #pad rows when it is re-batched
+
+    def pad_row(self,old_size,new_size): 
+        #pad rows when it is re-batched
+        #근데 padding 했을때 malicous benign이 애매해져서 그냥 자르는 것으로 할 생각. 
+        '''
         if self.batch_count==1:
             concatX=np.full((n,self.max_ft),-1)
             concatY=np.full((n,1),'B')
             self.batch_size+=n
             self.batch_data=np.concatenate(self.batch_data,concatX)
-            
+        '''
+        cut=old_size%new_size
+        if self.batch_count==1: #one big batch
+            self.batch_data=self.batch_data[:old_size-cut,:]
+            self.batch_target=self.batch_target.loc[:old_size-cut,:]
+        elif self.batch_count>1:#several batch
+            leave=int(old_size/new_size)
+            self.batch_data=self.batch_data[:leave,:,:]
+            self.batch_target=self.batch_target.loc[:leave,:,:]
 
-    def pad_column(self,n):
-        pass
     
     def rebatch(self,new_batch_size):
-        tmp=self.batch_size
-       
-        if tmp%new_batch_size!=0:
-            self.pad_row(tmp%new_batch_size)
+        
+        if self.batch_size%new_batch_size!=0:
+            self.pad_row(self.batch_size,new_batch_size)
         
         #그냥 숫자 변수 챙기기
+        tmp=self.batch_size
         self.batch_size=new_batch_size
         self.batch_count=int(tmp/new_batch_size)
         #데이터 변수 챙기기
-        self.batch_data=np.resize(self.batch_data,(self.batch_count,new_batch_size,self.max_ft))
-        #need work
-        #y는 pandas dataframe이라 이렇게 resize하지 않는다. 
-        self.batch_target=np.resize(self.batch_target,(self.batch_count,new_batch_size,1))       
+        self.batch_data.resize((self.batch_count,self.batch_size,self.max_ft))
+        self.batch_target.resize((self.batch_count,self.batch_size))    
+
+        print("\n|||Batch size updated: [%d,%d,%d]"%(self.batch_count,self.batch_size,self.max_ft))   
     
         
