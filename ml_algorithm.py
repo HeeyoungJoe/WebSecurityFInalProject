@@ -20,6 +20,50 @@ import time
 import pandas as pd
 import numpy as np
 
+
+def try_ensemblers(x,y):
+    #random forest
+    #KFold-->might have to do it separately because it might come from keras
+    #hen does make_2D
+    #them does print_2D
+    pass
+def try_nn(x,y):
+    #try both cnn and lstm networks
+    #then does make_2D
+    #then does print_2D
+    pass
+
+def try_simple(x,y):
+    #svm in different ways
+    pass
+
+'''
+해야하고 할 수 있는 것
+(1) SVC를 어떻게 쓸 것인가
+일단 2D로 옮겼을 때 직관적으로 구분이 더 가는건 pca이다
+pca를 한 뒤에 svc를 돌린다
+- 돌린 뒤 나뉜 그룹에 대해
+-   각 그룹의 벡터의 태그 비율을 센다
+
+(2) random forest 돌리기
+- 돌린 뒤에 두 그룹이 나올 것이다
+- 각 그룹의 벡터의 태그 비율을 센다
+
+(3) k-means 돌리기 
+- 그냥도 돌려보고
+- pca한 뒤의 것도 돌려본다
+
+고민되는 것
+(1) NN- keras로 돌려야 할 것 같음. 코드 구조 관찰 요망/ sklearn이랑 한번 더 비교
+(2) CNN이 잘 어울릴 것 같은데... 어떤 레이어를 몇 번 겹칠지 고민
+선행 연구 결과는 없을까?
+
+
+그리고 해야 하는 것
+- libsvm 속 전처리 결과에 따라 달라지는지 비교할 수 있어야 한다. 
+ 
+'''
+ 
 #%%
 def make_2D(x):
     #t-sne
@@ -33,7 +77,7 @@ def make_2D(x):
     print(pca)
     return tsne,pca
 
-def print_2D(x,y):
+def print_2D(title,x,y):
     '''
     code from:
     https://towardsdatascience.com/pca-using-python-scikit-learn-e653f8989e60
@@ -42,11 +86,11 @@ def print_2D(x,y):
     ax=fg.add_subplot(1,1,1)
     ax.set_xlabel('Principal Component 1',fontsize=15)
     ax.set_ylabel('Principal Component 2', fontsize = 15)
-    ax.set_title('2 component PCA', fontsize = 20)
+    ax.set_title(title, fontsize = 20)
 
     targets=['M','B']
     colors=['r','b']
-    #need work
+    
     if y.shape!=(len(y),1):
         y=y.reshape((len(y),1))
     
@@ -69,10 +113,12 @@ if __name__=='__main__':
 
     print("\n\nTime spent:",parse_start-parse_end)
 
-    x=a.batch_data[117]
-    y=a.batch_target[117]
+    x=a.batch_data[108]
+    y=a.batch_target[108]
     t,p=make_2D(x)
-    print_2D(t,y)
+    print_2D('T-SNE',t,y)
+#%%
+    print_2D('PCA',p,y)
     # index=1
     '''
     for dat,tar in zip(a.batch_data,a.batch_target):
@@ -87,3 +133,5 @@ if __name__=='__main__':
     
 
 
+
+# %%
