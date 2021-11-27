@@ -1,4 +1,3 @@
-
 f = open('./data.libsvm', 'r')
 
 lines = f.readlines()
@@ -17,10 +16,6 @@ for line in lines:
 			minus_list[key-1]=val
 	if int(l[0]) == 1:
 		mb = 'M'
-	else:
-		mb = 'B'
 	
-	result_string=mb+', '+str(minus_list).strip('[]')+', '+file_name
-
-	print(result_string)
-
+	  result_string=mb+', '+str(minus_list).strip('[]')+', '+file_name
+	  print(result_string)
