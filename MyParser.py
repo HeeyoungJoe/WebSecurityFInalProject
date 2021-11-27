@@ -136,7 +136,7 @@ class MyParser:
 
         print("\n|||Batch size updated: [%d,%d,%d]"%(self.batch_count,self.batch_size,self.max_ft))   
     
-        
+'''      
 if __name__=='__main__':
     a=MyParser('./pdf2csv/testcsv')
     parse_start=time.time()
@@ -150,3 +150,5 @@ if __name__=='__main__':
     print(a.batch_target[:5])
 
     a.rebatch(10000)
+
+'''
