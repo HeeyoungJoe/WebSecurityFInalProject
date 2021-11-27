@@ -14,19 +14,22 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from MyParser import MyParser
 import matplotlib.pyplot as plt
+
+import time
 import pandas as pd
 import numpy as np
-def make_2D(x,y):
+
+def make_2D(x):
     #t-sne
     #t-sne simply returns
     print("\n\n=============T-SNE=============\n")
     tsne=TSNE(n_components=2,learning_rate='auto',init='random').fit_transform(x)
-    return tsne
-    '''
+    print(tsne)
     #pca
     print("\n\n=============PCA=============\n")
-    pca=PCA(n_compoenets=2).fit_transform(x)
-    '''
+    pca=PCA(n_components=2).fit_transform(x)
+    print(pca)
+    return tsne,pca
 
 def print_2D(x,y):
     '''
@@ -39,39 +42,39 @@ def print_2D(x,y):
     ax.set_ylabel('Principal Component 2', fontsize = 15)
     ax.set_title('2 component PCA', fontsize = 20)
 
-    targets=['malicious','benign']
+    targets=['M','B']
     colors=['r','b']
+    #need work
+    if y.shape!=(len(y),1):
+        y=y.reshape((len(y),1))
+    
+    print("\n\nshape of x:",x.shape,"\nshape of y:",y.shape)
 
-    data=pd.DataFrame(np.concatenate((x,y.resize(y.size,1)),axis=1),columns=['pc1','pc2','target'])
+    data=pd.DataFrame(np.concatenate((x,y),axis=1),columns=['pc1','pc2','target'])
 
     for target, color in zip(targets,colors):
         indices=data['target']==target
         ax.scatter(data.loc[indices,'pc1'],data.loc[indices,'pc2'],c=color,s=50)
     ax.legend(targets)
     ax.grid()
-
-def unsupervised_algorithm(version,dataX):
     
-    clusters={}
-
-    #k means clustering -->this isn't supervised. Does this have meaning?
-    print("\n\n=============K Means=============\n")
-    km=KMeans(n_clusters=2,random_state=0)
-    km.fit(dataX)
-    clusters['km']=km.labels
-
-    
-    return clusters
-
-if __name__=="__main__":
+if __name__=='__main__':
     a=MyParser('./pdf2csv/testcsv')
+    parse_start=time.time()
     a.parse()
-    x=a.batch_data[:5]
-    y=a.batch_target[:5]
-    x.resize((5,:))
+    parse_end=time.time()
+    a.rebatch(20)
 
-    print("\n\n\\\\yoyo x size %d and y size %d\n\n"%(x.size,y.size))
+    print("\n\nTime spent:",parse_start-parse_end)
 
-    x_new=make_2D(x,y)
-    print_2D(x_new,y)
-    unsupervised_algorithm(x)
+    index=1
+    for dat,tar in zip(a.batch_data,a.batch_target):
+        if index==3: break
+        t,p=make_2D(dat)
+        print_2D(t,tar)
+        index=index+1
+
+    #tryout ml
+
+    a.rebatch(10000)
+

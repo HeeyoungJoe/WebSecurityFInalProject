@@ -136,7 +136,12 @@ class MyParser:
 
         print("\n|||Batch size updated: [%d,%d,%d]"%(self.batch_count,self.batch_size,self.max_ft))   
     
-'''      
+    def printSize(self):
+        print("\n\n[Let's look about its size]\n")
+        print("|||Batch_data:",self.batch_data.shape,"\n")
+        print("|||Batch_target:",self.batch_count,"\n")
+ 
+'''     
 if __name__=='__main__':
     a=MyParser('./pdf2csv/testcsv')
     parse_start=time.time()
