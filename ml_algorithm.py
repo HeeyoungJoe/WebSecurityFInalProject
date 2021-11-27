@@ -1,3 +1,4 @@
+#%%
 #tryout if these make better vectors
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -19,6 +20,7 @@ import time
 import pandas as pd
 import numpy as np
 
+#%%
 def make_2D(x):
     #t-sne
     #t-sne simply returns
@@ -57,24 +59,31 @@ def print_2D(x,y):
         ax.scatter(data.loc[indices,'pc1'],data.loc[indices,'pc2'],c=color,s=50)
     ax.legend(targets)
     ax.grid()
-    
+#%%
 if __name__=='__main__':
     a=MyParser('./pdf2csv/testcsv')
     parse_start=time.time()
     a.parse()
     parse_end=time.time()
-    a.rebatch(20)
+    a.rebatch(100)
 
     print("\n\nTime spent:",parse_start-parse_end)
 
-    index=1
+    x=a.batch_data[117]
+    y=a.batch_target[117]
+    t,p=make_2D(x)
+    print_2D(t,y)
+    # index=1
+    '''
     for dat,tar in zip(a.batch_data,a.batch_target):
         if index==3: break
         t,p=make_2D(dat)
         print_2D(t,tar)
-        index=index+1
+        index=index+1'''
+    
 
     #tryout ml
 
-    a.rebatch(10000)
+    
+
 
