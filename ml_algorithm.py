@@ -20,7 +20,7 @@ import time
 import pandas as pd
 import numpy as np
 
-
+#%%
 def try_ensemblers(x,y):
     #random forest
     #KFold-->might have to do it separately because it might come from keras
@@ -33,9 +33,30 @@ def try_nn(x,y):
     #then does print_2D
     pass
 
-def try_simple(x,y):
+def try_simple(x,y): #returns SVC models
     #svm in different ways
-    pass
+    models={}
+    
+    #2D then SVC
+    tsne,pca=make_2D(x)
+    #tsne
+    svc_tsne=SVC(kernel="rb",degree=3,gamma="scale")
+    svc_tsne.fit(tsne,y)
+    #pca
+    svc_pca=SVC(kernel="rb",degree=3,gamma="scale")
+    svc_pca.fit(pca,y)
+    #result
+    models["tsne_SVC"]=svc_tsne
+    models["pca_SVC"]=svc_pca
+    
+    #plain SVC 
+    size_x,size_y=x.shape
+    svc_no=SVC(kernel="rbf",degree=size_x+1,gamma="scale")
+    svc_no.fit(x,y)
+    models["plain"]=svc_no
+    
+    return models
+        
 
 '''
 해야하고 할 수 있는 것
@@ -75,7 +96,7 @@ def make_2D(x):
     print("\n\n=============PCA=============\n")
     pca=PCA(n_components=2).fit_transform(x)
     print(pca)
-    return tsne,pca
+    return tsne,pca #모델이 아니라 결과를 줌
 
 def print_2D(title,x,y):
     '''
@@ -115,23 +136,39 @@ if __name__=='__main__':
 
     x=a.batch_data[108]
     y=a.batch_target[108]
+#%%
     t,p=make_2D(x)
     print_2D('T-SNE',t,y)
-#%%
     print_2D('PCA',p,y)
     # index=1
-    '''
+   
     for dat,tar in zip(a.batch_data,a.batch_target):
         if index==3: break
         t,p=make_2D(dat)
         print_2D(t,tar)
-        index=index+1'''
+        index=index+1
     
-
-    #tryout ml
-
     
+#%%
+    
+    #take x, y as train data
+    #and the next batch as test data
+    SVC_models=try_nn(x,y)
+    test_x=a.batch_data[109]
+    test_y=a.batch_target[109]
+    
+    #try test data
+    pred_plainSVC=SVC_models['plain'].predict(test_x)
+    pred_tsneSVC=SVC_models['tsne_SVC'].predict(test_x)
+    pred_pcaSVC=SVC_models['pca_SVC'].predict(test_x)
 
-
+    #calculate accuracy
+    acc_plainSVC=accuracy_score(test_y,pred_plainSVC)
+    acc_tsneSVC=accuracy_score(test_y,pred_tsneSVC)
+    acc_pcaSVC=accuracy_score(test_y,pred_pcaSVC)
+    print("\nAccuracy of SVC\n")  
+    print("|||plain:",acc_plainSVC,"\n")
+    print("|||tsne-SVC:",acc_tsneSVC,"\n")
+    print("|||pca-SVC:",acc_pcaSVC,"\n")
 
 # %%
