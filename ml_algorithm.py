@@ -32,59 +32,47 @@ def try_nn(x,y):
     #then does make_2D
     #then does print_2D
     pass
-
-def try_simple(x,y): #returns SVC models
+#%%
+def try_simpleSVC(trainx,trainy,testx,testy): #returns SVC models
     #svm in different ways
-    models={}
-    
+
+    tr,tc=trainx.shape
     #2D then SVC
-    tsne,pca=make_2D(x)
+    tsne,pca=make_2D(np.concatenate((trainx,testx),axis=0))
     #tsne
-    svc_tsne=SVC(kernel="rb",degree=3,gamma="scale")
-    svc_tsne.fit(tsne,y)
+    svc_tsne=SVC(kernel="rbf",degree=3,gamma="scale")
+    svc_tsne.fit(tsne[:tr],trainy)
     #pca
-    svc_pca=SVC(kernel="rb",degree=3,gamma="scale")
-    svc_pca.fit(pca,y)
+    svc_pca=SVC(kernel="rbf",degree=3,gamma="scale")
+    svc_pca.fit(pca[:tr],trainy)
     #result
-    models["tsne_SVC"]=svc_tsne
-    models["pca_SVC"]=svc_pca
+    pred_tsne=svc_tsne.predict(tsne[tr:])
+    pred_pca=svc_pca.predict(pca[tr:])
     
-    #plain SVC 
-    size_x,size_y=x.shape
-    svc_no=SVC(kernel="rbf",degree=size_x+1,gamma="scale")
-    svc_no.fit(x,y)
-    models["plain"]=svc_no
+    #print("\n dimentions of prediction:",pred_tsne.shape)
+    #acc1=accuracy_score(testy,pred_tsne)
+    #acc2=accuracy_score(testy,pred_pca)
     
-    return models
+    #print("\n|||Accuracy w TSNE:\n",acc1)
+    #print("\n|||Accuracy w PCA:\n",acc2)
+    
+    return svc_tsne,svc_pca 
         
+#%%
+def try_SVC(trainx,trainy): #returns SVC models
+    #svm in different ways
 
-'''
-해야하고 할 수 있는 것
-(1) SVC를 어떻게 쓸 것인가
-일단 2D로 옮겼을 때 직관적으로 구분이 더 가는건 pca이다
-pca를 한 뒤에 svc를 돌린다
-- 돌린 뒤 나뉜 그룹에 대해
--   각 그룹의 벡터의 태그 비율을 센다
+    #tr,tc=trainx.shape
+    #2D then SVC
+    tsne,pca=make_2D(trainx)
+    #tsne
+    svc_tsne=SVC(kernel="rbf",degree=3,gamma="scale")
+    svc_tsne.fit(tsne,trainy)
+    #pca
+    svc_pca=SVC(kernel="rbf",degree=3,gamma="scale")
+    svc_pca.fit(pca,trainy)
+    return svc_tsne,svc_pca 
 
-(2) random forest 돌리기
-- 돌린 뒤에 두 그룹이 나올 것이다
-- 각 그룹의 벡터의 태그 비율을 센다
-
-(3) k-means 돌리기 
-- 그냥도 돌려보고
-- pca한 뒤의 것도 돌려본다
-
-고민되는 것
-(1) NN- keras로 돌려야 할 것 같음. 코드 구조 관찰 요망/ sklearn이랑 한번 더 비교
-(2) CNN이 잘 어울릴 것 같은데... 어떤 레이어를 몇 번 겹칠지 고민
-선행 연구 결과는 없을까?
-
-
-그리고 해야 하는 것
-- libsvm 속 전처리 결과에 따라 달라지는지 비교할 수 있어야 한다. 
- 
-'''
- 
 #%%
 def make_2D(x):
     #t-sne
@@ -140,8 +128,9 @@ if __name__=='__main__':
     t,p=make_2D(x)
     print_2D('T-SNE',t,y)
     print_2D('PCA',p,y)
-    # index=1
-   
+    
+    index=1
+    
     for dat,tar in zip(a.batch_data,a.batch_target):
         if index==3: break
         t,p=make_2D(dat)
@@ -150,25 +139,18 @@ if __name__=='__main__':
     
     
 #%%
-    
+    #Trying small version of try_SVC-->try_simple
     #take x, y as train data
     #and the next batch as test data
-    SVC_models=try_nn(x,y)
+    
     test_x=a.batch_data[109]
     test_y=a.batch_target[109]
+    try_simpleSVC(x,y,test_x,test_y)
     
-    #try test data
-    pred_plainSVC=SVC_models['plain'].predict(test_x)
-    pred_tsneSVC=SVC_models['tsne_SVC'].predict(test_x)
-    pred_pcaSVC=SVC_models['pca_SVC'].predict(test_x)
+# %%
 
-    #calculate accuracy
-    acc_plainSVC=accuracy_score(test_y,pred_plainSVC)
-    acc_tsneSVC=accuracy_score(test_y,pred_tsneSVC)
-    acc_pcaSVC=accuracy_score(test_y,pred_pcaSVC)
-    print("\nAccuracy of SVC\n")  
-    print("|||plain:",acc_plainSVC,"\n")
-    print("|||tsne-SVC:",acc_tsneSVC,"\n")
-    print("|||pca-SVC:",acc_pcaSVC,"\n")
+    #Training SVC for real
+    print(a.batch_data.shape)
 
 # %%
+a.rebatch()
