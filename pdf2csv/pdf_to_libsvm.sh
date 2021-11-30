@@ -19,4 +19,5 @@ find $PWD/cache-test -name '*.pdf' -not -empty > cached-test.txt
 
 ./src/feat-extract -m cached-pdfs.txt -b cached-test.txt -f features.nppf --values -o data.libsvm
 
-python libsvm_to_csv.py > output_test.csv
+# libsvm_to_csv2.py에서 -m cached-pdfs.txt에 있는 파일들만 print > output_test
+python libsvm_to_csv2.py > output_test.csv
