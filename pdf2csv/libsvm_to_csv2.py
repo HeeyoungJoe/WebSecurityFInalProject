@@ -1,3 +1,4 @@
+import csv
 f = open('./data.libsvm', 'r')
 
 lines = f.readlines()
