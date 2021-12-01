@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from os import listdir
 import time
+
+from sklearn.base import TransformerMixin
 class MyDocument:
     '''
     csv file into structure below
@@ -99,7 +101,7 @@ class MyParser:
             print("\nFirst batch target in!...size %d\n"%self.batch_target.size)
         else:
             self.batch_target=np.concatenate((self.batch_target,parsed.Y.to_numpy()))
-
+        return parsed
 
     def pad_row(self,old_size,new_size): 
         #pad rows when it is re-batched
@@ -140,7 +142,15 @@ class MyParser:
         print("\n\n[Let's look about its size]\n")
         print("|||Batch_data:",self.batch_data.shape,"\n")
         print("|||Batch_target:",self.batch_count,"\n")
- 
+    def set_splitter(self,percentage):
+        count,row,col=self.batch_data.shape
+        index=int(count*percentage)
+        testx=self.batch_data[:index]
+        testy=self.batch_target[:index]
+        trainx=self.batch_data[index:]
+        trainy=self.batch_target[index:]
+        return testx,testy,trainx,trainy
+        
 '''     
 if __name__=='__main__':
     a=MyParser('./pdf2csv/testcsv')

@@ -13,12 +13,15 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 #display result
 from sklearn.metrics import accuracy_score
-from MyParser import MyParser
 import matplotlib.pyplot as plt
 
 import time
 import pandas as pd
 import numpy as np
+
+#%% 
+#update
+from MyParser import MyParser
 
 #%%
 def try_ensemblers(x,y):
@@ -59,32 +62,46 @@ def try_simpleSVC(trainx,trainy,testx,testy): #returns SVC models
     return svc_tsne,svc_pca 
         
 #%%
+#input: batched data of trainx and trainy
+#output: SVC model that passed tsne, pca each 
 def try_SVC(trainx,trainy): #returns SVC models
     #svm in different ways
 
-    #tr,tc=trainx.shape
     #2D then SVC
-    tsne,pca=make_2D(trainx)
+    tsne,pca=make_2D(trainx) #trained models
     #tsne
     svc_tsne=SVC(kernel="rbf",degree=3,gamma="scale")
-    svc_tsne.fit(tsne,trainy)
     #pca
     svc_pca=SVC(kernel="rbf",degree=3,gamma="scale")
-    svc_pca.fit(pca,trainy)
+    
+    #need work
+    #get the results of tsne pca
+    #choose between tsne-sfc with best results
+    for input,target in zip(trainx,trainy):
+        svc_tsne.fit(input,target)
+        svc_pca.fit(input,target)
     return svc_tsne,svc_pca 
 
 #%%
+
+#tsne and pca
+#input: batched data
+#output: tsne, pca model
 def make_2D(x):
+    #x: batch count, batch size, feature size
+    
     #t-sne
-    #t-sne simply returns
-    print("\n\n=============T-SNE=============\n")
-    tsne=TSNE(n_components=2,learning_rate='auto',init='random').fit_transform(x)
-    print(tsne)
+    print("\n\nTSNE preparing...")
+    tsne=TSNE(n_components=2,learning_rate='auto',init='random')
     #pca
-    print("\n\n=============PCA=============\n")
-    pca=PCA(n_components=2).fit_transform(x)
-    print(pca)
-    return tsne,pca #모델이 아니라 결과를 줌
+    print("\n\nPCA preparing...")
+    pca=PCA(n_components=2)
+    
+    for batch in x:
+        tsne.fit(x)
+        pca.fit(x)
+    
+    return tsne,pca #모델 줌
 
 def print_2D(title,x,y):
     '''
@@ -112,7 +129,7 @@ def print_2D(title,x,y):
         ax.scatter(data.loc[indices,'pc1'],data.loc[indices,'pc2'],c=color,s=50)
     ax.legend(targets)
     ax.grid()
-#%%
+
 if __name__=='__main__':
     a=MyParser('./pdf2csv/testcsv')
     parse_start=time.time()
@@ -124,7 +141,7 @@ if __name__=='__main__':
 
     x=a.batch_data[108]
     y=a.batch_target[108]
-#%%
+
     t,p=make_2D(x)
     print_2D('T-SNE',t,y)
     print_2D('PCA',p,y)
@@ -138,7 +155,7 @@ if __name__=='__main__':
         index=index+1
     
     
-#%%
+
     #Trying small version of try_SVC-->try_simple
     #take x, y as train data
     #and the next batch as test data
@@ -146,11 +163,26 @@ if __name__=='__main__':
     test_x=a.batch_data[109]
     test_y=a.batch_target[109]
     try_simpleSVC(x,y,test_x,test_y)
-    
-# %%
 
     #Training SVC for real
     print(a.batch_data.shape)
 
-# %%
-a.rebatch()
+    testx,testy,trainx,trainy=a.set_splitter(0.3)
+    tsneSVC,pcaSVC=try_SVC(trainx,trainy)
+    
+    predtsne=np.empty()
+    predpca=np.empty()
+    for input in testx:
+        predtsne.append(tsneSVC.predict(input))
+        predpca.append(pcaSVC.predict(input))
+
+    #make results into one big np array
+    #in order to feed it into accuracy_score
+    tb,tr,tc=testy.shape
+    testy=np.reshape((tb*tr,1),testy)
+    predtsne=np.reshape((tb*tr,1),predtsne)
+    predpca=np.reshape((tb*tr,1),predpca)
+    print("\n|||Accuracy tsne:",accuracy_score(testy,predtsne))
+    print("\n|||Accuracy pca:",accuracy_score(testy,predpca))
+
+
