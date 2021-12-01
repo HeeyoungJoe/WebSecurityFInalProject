@@ -43,11 +43,9 @@ class MyParser:
     def __init__(self,path):
         self.path=path
         self.file_history=[]
-        self.batch_count=1
-        self.batch_data=None
-        self.batch_target=None
-        self.max_ft=0
-        self.batch_size=0
+        self.batch_data=[]
+        self.batch_target=[]
+
     
     '''
     methods
@@ -60,97 +58,80 @@ class MyParser:
     (2) resize data&target
     (3) update batch size, batch count, remainder count
     '''
-    def parse(self): #딱 한 번만 맨 처음에 실행됨을 가정한다. -->그래야지 batch_count=1인 상황만 고려할 수 있다.
+    def parse(self): 
+        #딱 한 번만 맨 처음에 실행됨을 가정한다. -->그래야지 batch_count=1인 상황만 고려할 수 있다.
+        #needwork
+        #문서끼리 섞이면 안된다.
         for filename in listdir(self.path):
             self.parse_single(filename)
-        #행*열 사이즈다. 
-        #parse는 시작시 한번만 이뤄지므로 batch_count는 이 함수가 실행될 때 항상 1이다.
-        #따라서 batch_size는 모든 파일 파싱이 이뤄진 후 딱 한번만 실행되면 된다. 
-        self.batch_size=self.batch_data.size 
-        
-        #feature의 개수는 행*열 사이즈인 batch_size에서 행 사이즈와 같은 batch_target의 사이즈를 나누면 된다.
-        #딱 처음에 한 번만 구해주면 된다. 
-        self.max_ft=int(self.batch_size/self.batch_target.size)
-        '''
-        #batch data 와 batch target size 조정
-        self.batch_data.resize((self.batch_count,int(self.batch_size/self.max_ft),self.max_ft))
-        self.batch_target.resize((self.batch_count,self.batch_size,1))
-        '''
+
         #alarm
-        print("\n|||Parsed Result:\n|||Document count:\t%d\n|||Batch_size:\t%d\n|||Batch_count:\t%d\n"%(len(self.file_history),self.batch_data.size,self.batch_count))
-        print("call (instance).batch_data for train input(numpy array of size: [.batch_count,.batch_size,.max_ft])\n and (instance).batch_target for train output (numpy array of size: [.batch_count,.batch_size,1])")
+        print("\n|||Parsed Result:\n|||Document count:\t%d\n|||Batch_size:\t%d\n"%(len(self.file_history),len(self.batch_data.size)))
+        print("call (instance).batch_data for train input")
+        print("list of numpy array of size: [.batch_count,.batch_size,.max_ft])\n")
+        print("and (instance).batch_target for train output")
+        print("list of numpy numpy array of size: [.batch_count,.batch_size,1])\n")
+    
     def parse_single(self,filename):
         data=pd.read_csv(self.path+'/'+filename) #csv 파일 읽기
         parsed=MyDocument(data,filename) #MyDocument 오브젝트로 변환
         self.file_history.append(parsed) #변환 완성된 fd를 file_history에 저장
 
-        #numpy dataset 만들기
-        # 모든 파일의 열 개수가 같다고 가정하고 있다. 
         #X
-        if self.batch_data==None:
-            self.batch_data=parsed.X.to_numpy()
-            print("\nFirst batch data in!...size%d\n"%self.batch_data.size)
-            #한 csv 파일에는 여러 pdf 파일에 대한 벡터가 있다. 그래서 이미 2D ndarray일 것이다.        
-        else:
-            self.batch_data=np.concatenate((self.batch_data,parsed.X.to_numpy))
-              
+        x=parsed.X.to_numpy()
+        self.batch_data.append(x)
+        print("\nbatch data in!...size%d\n"%x.size)
+   
         #Y
-        #string numpy array 가능하다.
-        if self.batch_target==None:
-            self.batch_target=parsed.Y.to_numpy()
-            print("\nFirst batch target in!...size %d\n"%self.batch_target.size)
-        else:
-            self.batch_target=np.concatenate((self.batch_target,parsed.Y.to_numpy()))
-        return parsed
+        y=parsed.Y.to_numpy()
+        self.batch_target.append(y)
+        print("\nbatch target in!...size %d\n"%y.size)
+        
+        #여기의 x, y는 각각 2D, 1D 행렬
+        return x
 
-    def pad_row(self,old_size,new_size): 
-        #pad rows when it is re-batched
-        #근데 padding 했을때 malicous benign이 애매해져서 그냥 자르는 것으로 할 생각. 
-        '''
-        if self.batch_count==1:
-            concatX=np.full((n,self.max_ft),-1)
-            concatY=np.full((n,1),'B')
-            self.batch_size+=n
-            self.batch_data=np.concatenate(self.batch_data,concatX)
-        '''
-        cut=old_size%new_size
-        if self.batch_count==1: #one big batch
-            self.batch_data=self.batch_data[:self.batch_data.size-cut]
-            self.batch_target=self.batch_target[:self.batch_target.size-cut]
-        elif self.batch_count>1:#several batch
-            leave=int(old_size/new_size)
-            self.batch_data=self.batch_data[:leave,:,:]
-            self.batch_target=self.batch_target[:leave,:,:]
-
+    #need work
     
-    def rebatch(self,new_batch_size):
-        
-        if self.batch_size%new_batch_size!=0:
-            self.pad_row(self.batch_size,new_batch_size)
-        
-        #그냥 숫자 변수 챙기기
-        tmp=self.batch_size
-        self.batch_size=new_batch_size
-        self.batch_count=int(tmp/new_batch_size)
-        #데이터 변수 챙기기
-        self.batch_data=np.resize(self.batch_data,(self.batch_count,self.batch_size,self.max_ft)) #need work 
-        self.batch_target=np.resize(self.batch_target,(self.batch_count,self.batch_size))    
-
-        print("\n|||Batch size updated: [%d,%d,%d]"%(self.batch_count,self.batch_size,self.max_ft))   
+    '''
+    randomly pick train data 
+    things to make sure
+    1. randomize
+    2. split to test and train
+    per document
     
-    def printSize(self):
-        print("\n\n[Let's look about its size]\n")
-        print("|||Batch_data:",self.batch_data.shape,"\n")
-        print("|||Batch_target:",self.batch_count,"\n")
-    def set_splitter(self,percentage):
-        count,row,col=self.batch_data.shape
-        index=int(count*percentage)
-        testx=self.batch_data[:index]
-        testy=self.batch_target[:index]
-        trainx=self.batch_data[index:]
-        trainy=self.batch_target[index:]
-        return testx,testy,trainx,trainy
+    input: path
+    output: set of (traindata, testdata)
+    
+    function
+    
+    -randomize set per document
+    -set splitter -->but returning sets
+    
+    do I need rebatch? -->아니 필요 없어. 그냥 자를거야. 
+    
+    
+    '''
+
+    def prepare_data(self,percentage):
+        #randomize
         
+        #1. for all document splitted to M or B
+        #need work
+
+        #get data
+        dataset=[]
+        for document in self.batch_data: #document is 2D
+            #get M part and B part
+            #random pick from both 
+            #prepare test and train set
+            np.random.shuffle(document)
+            index=int(document.size[0]*percentage)
+            testx=self.batch_data[:index]
+            testy=self.batch_target[:index]
+            trainx=self.batch_data[index:]
+            trainy=self.batch_target[index:]
+            dataset.append((testx,testy,trainx,trainy))
+        return dataset
 '''     
 if __name__=='__main__':
     a=MyParser('./pdf2csv/testcsv')
