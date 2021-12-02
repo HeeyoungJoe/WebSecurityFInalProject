@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 from os import listdir
 import time
-
-from sklearn.base import TransformerMixin
 class MyDocument:
     '''
     csv file into structure below
@@ -17,6 +15,7 @@ class MyDocument:
     def __init__(self,data,filename):
         self.data=data
         #2D일 것을 가정
+        
         self.X=self.data.iloc[:,1:]#dataframe
         #need work 여기는 M, B임 
         self.Y=self.data.iloc[:,0]#dataframe 
