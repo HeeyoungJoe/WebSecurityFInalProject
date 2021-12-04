@@ -3,9 +3,12 @@ sys.path.insert(1, './')
 from ml import final,print_result
 import pandas as pd
 import pickle
-
-
+from os import listdir
+# -*- coding: utf-8 -*-
 ############load model################
+#to print pretty
+pdfpath=sys.argv[2]
+directory_list=os.listdr(pdfpath)
 #linux
 folderpath="/home/dori/hidost/build"
 
@@ -21,4 +24,4 @@ data=pd.read_csv(testpath).to_numpy()
 x,y,name=column_slice(data) #ml.py
 #last, run model
 pred=model.predict(x)
-print_result(pred,name)
+print_result(pred,directory_list)
