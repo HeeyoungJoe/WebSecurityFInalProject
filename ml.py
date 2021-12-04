@@ -147,13 +147,15 @@ def runRF(trainpath,testpath):
         print("\n|||Accuracy on RF:\t",accuracy_score(testY,pred))
     
     return model,pred,name
+
 def final(trainpath):
-    data=pd.read_csv(trainpath)
-    trainX=data.iloc[:,1:-1]
-    trainY=data.iloc[:,0]
+    data=pd.read_csv(trainpath).to_numpy()
+    trainX=data[:,1:-1]
+    trainY=data[:,0]
+    name=data[:,-1]
     rf=try_simple_rf(trainX,trainY)
     
-    return rf
+    return rf,name
     
 def runSVC(trainpath,testpath):
     limit=1000
@@ -205,8 +207,9 @@ if __name__=="__main__":
     #print_result(pred_pca,name)
     #print_result(predrf,name)
     
-    #웹용
-    rf_final=final(trainpath)#모델
+    #웹용_
+    rf_final,name=final(trainpath)#모델
     testdata=pd.read_csv(testpath).to_numpy()
-    column_slice(testdata)
+    pred=rf_final.predict(column_slice(testdata))
+    print_result(pred,name)
     
