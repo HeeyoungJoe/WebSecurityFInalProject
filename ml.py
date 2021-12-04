@@ -18,29 +18,30 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 #%%
+def column_slice(data):
+    X=data[:,1:-1]
+    Y=data[:,0] 
+    name=data[:,-1]
+    return X,Y,name
 def parse(testpath,trainpath,limit): 
     #test set과 train set을 모두 파싱한다
     #둘의 열 수가 동일한지 확인한다. 
     data=pd.read_csv(trainpath)
     test=pd.read_csv(testpath)
     
-    ##TRAIN
+    ###########TRAIN############
     #numpy로 바꾸고
     traindata=data.to_numpy()
     np.random.shuffle(traindata)
     
     #자르기
     traindata=traindata[:limit]
-    trainX=traindata[:,1:-1]
-    trainY=traindata[:,0] 
-    trainname=traindata[:,-1]
+    trainX,trainY,trainname=column_slice(traindata)
     
-    ##TEST
+    ###########TEST##############
     #numpy로 바꾸고
     testdata=test.to_numpy()
-    testX=testdata[:,1:-1]
-    testY=testdata[:,0]
-    testname=testdata[:,-1]
+    testX,testY,testname=column_slice(testdata)
     
     tr_r,tr_c=trainX.shape
     t_r,t_c=testX.shape
@@ -63,9 +64,7 @@ def parse_train(trainpath,ratio,limit):
     
     np.random.shuffle(data)
     data=data[:limit]
-    X=data[:,1:-1]#dataframe
-    Y=data[:,0]#dataframe 
-    name=data[:,-1]
+    X,Y,name=column_slice(data)
     
     r,c=X.shape
     count=int((1-ratio)*r)
@@ -128,29 +127,36 @@ def try_simple_rf(x,y):
     rf.fit(x,y)
     return rf
 #%%
-def slice_data(x,y,count):
+def row_slice(x,y,count):
     trainX=x[:count]
     trainY=y[:count]
     testX=x[count:]
     testY=y[count:]
     return trainX,trainY,testX,testY
 def runRF(trainpath,testpath):
-    limit=500
+    limit=1000
     if testpath==None:
         count,X,Y,name=parse_train(trainpath,0.3,limit)
     else:
         count,X,Y,name=parse(trainpath,testpath,limit)
     #without 2D
-    trainX,trainY,testX,testY=slice_data(X,Y,count)
+    trainX,trainY,testX,testY=row_slice(X,Y,count)
     rf=try_simple_rf(trainX,trainY)
-    pred=rf.predict(testX)
+    
     if testpath==None:
         print("\n|||Accuracy on RF:\t",accuracy_score(testY,pred))
     
-    return pred,name
-
+    return model,pred,name
+def final(trainpath):
+    data=pd.read_csv(trainpath)
+    trainX=data.iloc[:,1:-1]
+    trainY=data.iloc[:,0]
+    rf=try_simple_rf(trainX,trainY)
+    
+    return rf
+    
 def runSVC(trainpath,testpath):
-    limit=100
+    limit=1000
     if testpath==None:
         count,X,Y,name=parse_train(trainpath,0.3,limit)
     else:
@@ -160,8 +166,8 @@ def runSVC(trainpath,testpath):
     tsne_x,pca_x=make_2D(X)
     print("\n|||make 2d result",tsne_x.shape,pca_x.shape)
     #cut train and test
-    train_tsne_x,train_tsne_y,test_tsne_x,test_tsne_y=slice_data(tsne_x,Y,count)
-    train_pca_x,train_pca_y,test_pca_x,test_pca_y=slice_data(pca_x,Y,count)
+    train_tsne_x,train_tsne_y,test_tsne_x,test_tsne_y=row_slice(tsne_x,Y,count)
+    train_pca_x,train_pca_y,test_pca_x,test_pca_y=row_slice(pca_x,Y,count)
 
     
     tsneSVC=try_simple_SVC(train_tsne_x,train_tsne_y)
@@ -188,23 +194,19 @@ def print_result(pred,name):
 if __name__=="__main__":
     #debug
     testpath=None
-    trainpath="./pdf2csv/output3.csv"#훈련
+    trainpath="./pdf2csv/output.csv"#훈련
     print("~~~~~~~~~~~~~~~~~~~~~~~~~SVM~~~~~~~~~~~~~~~~~~~~~~~~")
     pred_tsne,pred_pca,name=runSVC(trainpath,testpath) #accuacy print
     print("~~~~~~~~~~~~~~~~~~~~~~~~~RF~~~~~~~~~~~~~~~~~~~~~~~~")
     predrf,name=runRF(trainpath,testpath) #accucacy print
     
-    print_result(pred_tsne,name)
-    print_result(pred_pca,name)
-    print_result(predrf,name)
-    """ #release
-    testpath="#"#
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~SVM~~~~~~~~~~~~~~~~~~~~~~~~")
-    pred_tsne,pred_pca,name=runSVC(trainpath,testpath) 
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~RF~~~~~~~~~~~~~~~~~~~~~~~~")
-    predrf,name=runRF(trainpath,testpath) 
     
-    print_result(pred_tsne,name)
-    print_result(pred_pca,name)
-    print_result(predrf,name)
-    #runreleaseSVC() #추정치 array 주는 거 """
+    #print_result(pred_tsne,name)
+    #print_result(pred_pca,name)
+    #print_result(predrf,name)
+    
+    #웹용
+    rf_final=final(trainpath)#모델
+    testdata=pd.read_csv(testpath).to_numpy()
+    column_slice(testdata)
+    
