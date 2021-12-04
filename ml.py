@@ -24,20 +24,23 @@ def parse(testpath,trainpath,limit):
     data=pd.read_csv(trainpath)
     test=pd.read_csv(testpath)
     
+    ##TRAIN
+    #numpy로 바꾸고
     traindata=data.to_numpy()
     np.random.shuffle(traindata)
-    traindata=traindata[:limit]
-    trainX=traindata[:,1:]#dataframe
-    trainY=traindata[:,0]#dataframe 
     
+    #자르기
+    traindata=traindata[:limit]
+    trainX=traindata[:,1:-1]
+    trainY=traindata[:,0] 
+    trainname=traindata[:,-1]
+    
+    ##TEST
+    #numpy로 바꾸고
     testdata=test.to_numpy()
-    #지금 testdata가 따로 없어서 들어가는 곳
-    np.random.shuffle(testdata)
-    testdata=testdata[:10]
-    #여기까지
-    testX=testdata[:,1:]#dataframe
-    testY=testdata[:,0]#dataframe 
-
+    testX=testdata[:,1:-1]
+    testY=testdata[:,0]
+    testname=testdata[:,-1]
     
     tr_r,tr_c=trainX.shape
     t_r,t_c=testX.shape
@@ -49,8 +52,8 @@ def parse(testpath,trainpath,limit):
     #cocnatenate with test data
     totalX=np.concatenate((trainX,testX),axis=0)
     totalY=np.concatenate((trainY,testY),axis=0)
-    print("\n|||size!\t",totalX.shape,"\t",totalY.shape)
-    return tr_r,totalX,totalY
+    totalName=np.concatenate((trainname,testname),axis=0)
+    return tr_r,totalX,totalY,totalName
 
 def parse_train(trainpath,ratio,limit): 
     #test set과 train set을 모두 파싱한다
@@ -59,13 +62,14 @@ def parse_train(trainpath,ratio,limit):
     
     np.random.shuffle(data)
     data=data[:limit]
-    X=data[:,1:]#dataframe
+    X=data[:,1:-1]#dataframe
     Y=data[:,0]#dataframe 
+    name=data[:,-1]
     
     r,c=X.shape
     count=int((1-ratio)*r)
 
-    return count,totalX,totalY
+    return count,totalX,totalY,name
 
 #tsne and pca
 #input: batched data
@@ -132,9 +136,9 @@ def slice_data(x,y,count):
 def runRF(trainpath,testpath):
     limit=100
     if testpath==None:
-        count,X,Y=parse_train(trainpath,0.3,limit)
+        count,X,Y,name=parse_train(trainpath,0.3,limit)
     else:
-        count,X,Y=parse(trainpath,testpath,limit)
+        count,X,Y,name=parse(trainpath,testpath,limit)
     #without 2D
     trainX,trainY,testX,testY=slice_data(X,Y,count)
     rf=try_simple_rf(trainX,trainY)
@@ -142,14 +146,14 @@ def runRF(trainpath,testpath):
     if testpath==None:
         print("\n|||Accuracy on RF:\t",accuracy_score(testY,pred))
     
-    return pred
+    return pred,name
 
 def runSVC(trainpath,testpath):
     limit=100
     if testpath==None:
-        count,X,Y=parse_train(trainpath,0.3,limit)
+        count,X,Y,name=parse_train(trainpath,0.3,limit)
     else:
-        count,X,Y=parse(testpath,trainpath,limit)
+        count,X,Y,name=parse(testpath,trainpath,limit)
     
     print("\n|||Count:",count)
     tsne_x,pca_x=make_2D(X)
@@ -174,23 +178,32 @@ def runSVC(trainpath,testpath):
         acc2=accuracy_score(test_pca_y,pred_pca)
         print("\n|||accucacy for \n|||tsne \t%f\n|||pca \t%f\n"%(acc1,acc2))
     
-    return pred_tsne,pred_pca
+    return pred_tsne,pred_pca,name
+
+def print_result(pred,name):
+    for pr,na in zip(pred,name):
+        print("\n|||Doc[",na,"]\tis classified as\t[",pr,"]")
 #%%
 if __name__=="__main__":
     #debug
     testpath=None
-    trainpath="./pdf2csv/output.csv"#훈련
+    trainpath="./pdf2csv/output3.csv"#훈련
     print("~~~~~~~~~~~~~~~~~~~~~~~~~SVM~~~~~~~~~~~~~~~~~~~~~~~~")
-    runSVC(trainpath,testpath) #accuacy print
+    pred_tsne,pred_pca,name=runSVC(trainpath,testpath) #accuacy print
     print("~~~~~~~~~~~~~~~~~~~~~~~~~RF~~~~~~~~~~~~~~~~~~~~~~~~")
-    runRF(trainpath,testpath) #accucacy print
+    predrf,name=runRF(trainpath,testpath) #accucacy print
     
-    #release
-    testpath="#"
+    print_result(pred_tsne,name)
+    print_result(pred_pca,name)
+    print_result(predrf,name)
+    """ #release
+    testpath="#"#
     print("~~~~~~~~~~~~~~~~~~~~~~~~~SVM~~~~~~~~~~~~~~~~~~~~~~~~")
-    pred_tsne,pred_pca=runSVC(trainpath,testpath) #accuacy print
+    pred_tsne,pred_pca,name=runSVC(trainpath,testpath) 
     print("~~~~~~~~~~~~~~~~~~~~~~~~~RF~~~~~~~~~~~~~~~~~~~~~~~~")
-    predrf=runRF(trainpath,testpath) #accucacy print
+    predrf,name=runRF(trainpath,testpath) 
     
-    
-    #runreleaseSVC() #추정치 array 주는 거
+    print_result(pred_tsne,name)
+    print_result(pred_pca,name)
+    print_result(predrf,name)
+    #runreleaseSVC() #추정치 array 주는 거 """
