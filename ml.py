@@ -17,6 +17,7 @@ from sklearn.svm import SVC
 #display result
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
+import pickle
 #%%
 def column_slice(data):
     X=data[:,1:-1]
@@ -208,8 +209,10 @@ if __name__=="__main__":
     #print_result(predrf,name)
     
     #웹용_
-    rf_final,name=final(trainpath)#모델
-    testdata=pd.read_csv(testpath).to_numpy()
-    pred=rf_final.predict(column_slice(testdata))
-    print_result(pred,name)
-    
+  
+        
+    trainpath="./pdf2csv/output.csv"
+    rf_model,name=final(trainpath)#모델
+
+    filename="finalized_model.sav"
+    pickle.dump(rf_model,open(filename,'wb'))
