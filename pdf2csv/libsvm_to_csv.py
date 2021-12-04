@@ -21,6 +21,7 @@ for line in lines:
 		mb = 'B'
 	
 	result_string=mb+', '+str(minus_list).strip('[]')+', '+file_name
+	# result_string=mb+', '+str(minus_list).strip('[]')+', '+file_name
 
 	print(result_string)
 
