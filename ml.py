@@ -52,6 +52,20 @@ def parse(testpath,trainpath,limit):
     print("\n|||size!\t",totalX.shape,"\t",totalY.shape)
     return tr_r,totalX,totalY
 
+def parse_train(trainpath,ratio,limit): 
+    #test set과 train set을 모두 파싱한다
+    #둘의 열 수가 동일한지 확인한다. 
+    data=pd.read_csv(trainpath).to_numpy()
+    
+    np.random.shuffle(data)
+    data=data[:limit]
+    X=data[:,1:]#dataframe
+    Y=data[:,0]#dataframe 
+    
+    r,c=X.shape
+    count=int((1-ratio)*r)
+
+    return count,totalX,totalY
 
 #tsne and pca
 #input: batched data
@@ -109,36 +123,44 @@ def try_simple_rf(x,y):
     rf.fit(x,y)
     return rf
 #%%
+def slice_data(x,y,count):
+    trainX=x[:count]
+    trainY=y[:count]
+    testX=x[count:]
+    testY=y[count:]
+    return trainX,trainY,testX,testY
 def runRF(trainpath,testpath):
     limit=100
-    count,X,Y=parse(testpath,trainpath,limit)
-    print("\n|||Count:",count)
-    
+    if testpath==None:
+        count,X,Y=parse_train(trainpath,0.3,limit)
+    else:
+        count,X,Y=parse(trainpath,testpath,limit)
     #without 2D
-    pltrainX=X[:count]
-    pltrainY=Y[:count]
-    pltestX=X[count:]
-    pltestY=Y[count:]
-    rf=try_simple_rf(pltrainX,pltrainY)
-    plpred=rf.predict(pltestX)
-    print("\n|||Accuracy on RF:\t",accuracy_score(pltestY,plpred))
+    trainX,trainY,testX,testY=slice_data(X,Y,count)
+    rf=try_simple_rf(trainX,trainY)
+    pred=rf.predict(testX)
+    if testpath==None:
+        print("\n|||Accuracy on RF:\t",accuracy_score(testY,pred))
+    
+    return pred
 
 def runSVC(trainpath,testpath):
     limit=100
-    count,X,Y=parse(testpath,trainpath,limit)
+    if testpath==None:
+        count,X,Y=parse_train(trainpath,0.3,limit)
+    else:
+        count,X,Y=parse(testpath,trainpath,limit)
+    
     print("\n|||Count:",count)
     tsne_x,pca_x=make_2D(X)
     print("\n|||make 2d result",tsne_x.shape,pca_x.shape)
     #cut train and test
-    train_tsne_x=tsne_x[:count]
-    train_pca_x=pca_x[:count]
-    test_tsne_x=tsne_x[count:]
-    test_pca_x=pca_x[count:]
-    trainY=Y[:count]
-    testY=Y[count:]
+    train_tsne_x,train_tsne_y,test_tsne_x,test_tsne_y=slice_data(tsne_x,Y,count)
+    train_pca_x,train_pca_y,test_pca_x,test_pca_y=slice_data(pca_x,Y,count)
+
     
-    tsneSVC=try_simple_SVC(train_tsne_x,trainY)
-    pcaSVC=try_simple_SVC(train_pca_x,trainY)
+    tsneSVC=try_simple_SVC(train_tsne_x,train_tsne_y)
+    pcaSVC=try_simple_SVC(train_pca_x,train_pca_y)
     
     pred_tsne=tsneSVC.predict(test_tsne_x)
     pred_pca=pcaSVC.predict(test_pca_x)
@@ -146,15 +168,29 @@ def runSVC(trainpath,testpath):
     print("\n|||prediction done")
     print("\n|||pred_tsne result",pred_tsne.shape)
     print("\n|||pred_pca result",pred_pca.shape)
-    acc1=accuracy_score(testY,pred_tsne)
-    acc2=accuracy_score(testY,pred_pca)
     
-    print("\n|||accucacy for \n|||tsne \t%f\n|||pca \t%f\n"%(acc1,acc2))
+    if testpath==None:
+        acc1=accuracy_score(test_tsne_y,pred_tsne)
+        acc2=accuracy_score(test_pca_y,pred_pca)
+        print("\n|||accucacy for \n|||tsne \t%f\n|||pca \t%f\n"%(acc1,acc2))
+    
+    return pred_tsne,pred_pca
 #%%
 if __name__=="__main__":
-    testpath="./pdf2csv/output.csv"
-    trainpath="./pdf2csv/output.csv"
+    #debug
+    testpath=None
+    trainpath="./pdf2csv/output.csv"#훈련
     print("~~~~~~~~~~~~~~~~~~~~~~~~~SVM~~~~~~~~~~~~~~~~~~~~~~~~")
-    runSVC(trainpath,testpath)
+    runSVC(trainpath,testpath) #accuacy print
     print("~~~~~~~~~~~~~~~~~~~~~~~~~RF~~~~~~~~~~~~~~~~~~~~~~~~")
-    runRF(trainpath,testpath)
+    runRF(trainpath,testpath) #accucacy print
+    
+    #release
+    testpath="#"
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~SVM~~~~~~~~~~~~~~~~~~~~~~~~")
+    pred_tsne,pred_pca=runSVC(trainpath,testpath) #accuacy print
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~RF~~~~~~~~~~~~~~~~~~~~~~~~")
+    predrf=runRF(trainpath,testpath) #accucacy print
+    
+    
+    #runreleaseSVC() #추정치 array 주는 거
