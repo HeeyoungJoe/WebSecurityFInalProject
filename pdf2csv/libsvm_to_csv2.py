@@ -17,6 +17,7 @@ for line in lines:
 			minus_list[key-1] = val
 	if int(l[0]) == 1:
 		mb = 'M'
-
-		result_string = mb+', '+str(minus_list).strip('[]')+', '+file_name
+		
+		result_string = mb+', '+str(minus_list).strip('[]')
+		# result_string = mb+', '+str(minus_list).strip('[]')+', '+file_name
 		print(result_string)	
