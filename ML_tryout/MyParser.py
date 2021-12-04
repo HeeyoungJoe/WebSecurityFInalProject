@@ -1,7 +1,9 @@
+#
 import pandas as pd
 import numpy as np
 from os import listdir
 import time
+#
 class MyDocument:
     '''
     csv file into structure below
@@ -42,8 +44,8 @@ class MyParser:
     def __init__(self,path):
         self.path=path
         self.file_history=[]
-        self.batch_data=[]
-        self.batch_target=[]
+        self.batch_data=None
+        self.batch_target=None
 
     
     '''
@@ -65,7 +67,7 @@ class MyParser:
             self.parse_single(filename)
 
         #alarm
-        print("\n|||Parsed Result:\n|||Document count:\t%d\n|||Batch_size:\t%d\n"%(len(self.file_history),len(self.batch_data.size)))
+        print("\n|||Parsed Result:\n|||Document count:\t%d\n|||Batch_size:\t%d\n"%(len(self.file_history),self.batch_data.size))
         print("call (instance).batch_data for train input")
         print("list of numpy array of size: [.batch_count,.batch_size,.max_ft])\n")
         print("and (instance).batch_target for train output")
@@ -78,60 +80,62 @@ class MyParser:
 
         #X
         x=parsed.X.to_numpy()
-        self.batch_data.append(x)
+        if self.batch_data==None:
+            self.batch_data=x
+        else:
+            self.batch_data=np.concatenate((self.batch_data,x),axis=0)
         print("\nbatch data in!...size%d\n"%x.size)
    
         #Y
         y=parsed.Y.to_numpy()
-        self.batch_target.append(y)
+        if self.batch_target==None:
+            self.batch_target=y
+        else:
+            self.batch_target=np.concatenate((self.batch_target,y),axis=0)
         print("\nbatch target in!...size %d\n"%y.size)
         
         #여기의 x, y는 각각 2D, 1D 행렬
         return x
 
-    #need work
-    
-    '''
-    randomly pick train data 
-    things to make sure
-    1. randomize
-    2. split to test and train
-    per document
-    
-    input: path
-    output: set of (traindata, testdata)
-    
-    function
-    
-    -randomize set per document
-    -set splitter -->but returning sets
-    
-    do I need rebatch? -->아니 필요 없어. 그냥 자를거야. 
-    
-    
-    '''
-
-    def prepare_data(self,percentage):
+'''
+    def prepare_data(self,percentage,limit):
         #randomize
         
         #1. for all document splitted to M or B
         #need work
 
-        #get data
-        dataset=[]
-        for document in self.batch_data: #document is 2D
-            #get M part and B part
-            #random pick from both 
-            #prepare test and train set
-            np.random.shuffle(document)
-            index=int(document.size[0]*percentage)
-            testx=self.batch_data[:index]
-            testy=self.batch_target[:index]
-            trainx=self.batch_data[index:]
-            trainy=self.batch_target[index:]
-            dataset.append((testx,testy,trainx,trainy))
-        return dataset
-'''     
+        dr,dc=self.batch_data.shape
+        tr=self.batch_target.size
+        self.batch_target=np.reshape(self.batch_target,(tr,1))
+        
+        dataset=np.concatenate((self.batch_data,self.batch_target),axis=1)
+        np.random.shuffle(dataset)
+        index=int(limit*percentage)
+        testx=dataset[:index,:dc]
+        testy=dataset[:index,dc:]
+        trainx=dataset[index:limit,:dc]
+        trainy=dataset[index:limit,dc:]
+        return testx,testy,trainx,trainy
+'''
+def prepare_dataset(x,y,percentage,limit):
+    #randomize
+    
+    #1. for all document splitted to M or B
+    #need work
+
+    dr,dc=x.shape
+    tr=y.size
+    y=np.reshape(y,(tr,1))
+    
+    dataset=np.concatenate((x,y),axis=1)
+    np.random.shuffle(dataset)
+    index=int(limit*percentage)
+    testx=dataset[:index,:dc]
+    testy=dataset[:index,dc:]
+    trainx=dataset[index:limit,:dc]
+    trainy=dataset[index:limit,dc:]
+    return testx,testy,trainx,trainy   
+#  
 if __name__=='__main__':
     a=MyParser('./pdf2csv/testcsv')
     parse_start=time.time()
@@ -143,7 +147,9 @@ if __name__=='__main__':
     print("\n\nSneak peek into data:\n")
     print(a.batch_data[:1,:5])
     print(a.batch_target[:5])
+#
+    testx,testy,trainx,trainy=prepare_dataset(a.batch_data,a.batch_target,0.3,100)
 
-    a.rebatch(10000)
 
-'''
+
+# %%
