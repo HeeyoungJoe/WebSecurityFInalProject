@@ -1,6 +1,7 @@
 import csv
-f = open('./data.libsvm', 'r')
 from openpyxl import Workbook
+
+f = open('./data.libsvm', 'r')
 write_wb = Workbook()
 
 write_ws = write_wb.create_sheet()
