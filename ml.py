@@ -58,7 +58,8 @@ def parse(testpath,trainpath,limit):
 def parse_train(trainpath,ratio,limit): 
     #test set과 train set을 모두 파싱한다
     #둘의 열 수가 동일한지 확인한다. 
-    data=pd.read_csv(trainpath).to_numpy()
+    data=pd.read_csv(trainpath)
+    data=data.to_numpy()
     
     np.random.shuffle(data)
     data=data[:limit]
@@ -69,7 +70,7 @@ def parse_train(trainpath,ratio,limit):
     r,c=X.shape
     count=int((1-ratio)*r)
 
-    return count,totalX,totalY,name
+    return count,X,Y,name
 
 #tsne and pca
 #input: batched data
@@ -134,7 +135,7 @@ def slice_data(x,y,count):
     testY=y[count:]
     return trainX,trainY,testX,testY
 def runRF(trainpath,testpath):
-    limit=100
+    limit=500
     if testpath==None:
         count,X,Y,name=parse_train(trainpath,0.3,limit)
     else:
