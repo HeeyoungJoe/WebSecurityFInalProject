@@ -20,14 +20,12 @@ for line in lines:
 			key = int(l[i].split(':')[0])
 			val = float(l[i].split(':')[1])
 			minus_list[key-1] = val
-			write_ws.append([index, filename])
 			
 	if int(l[0]) == 1:
 		mb = 'M'
 		
 		result_string = mb+', '+str(minus_list).strip('[]')+', '+index
-        	wr.writerow([index, file_name])
-		# result_string = mb+', '+str(minus_list).strip('[]')+', '+file_name
+        	write_ws.append([index, filename])
 		print(result_string)
 		index += 1
     
