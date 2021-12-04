@@ -26,7 +26,7 @@ for line in lines:
 		mb = 'M'
 		
 		result_string = mb+', '+str(minus_list).strip('[]')+', '+index
-        	write_ws.append([index, filename])
+        	write_ws.append([index, file_name])
 		print(result_string)
 		index += 1
     
