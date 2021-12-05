@@ -2,6 +2,7 @@
 f = open('./data.libsvm', 'r')
 
 lines = f.readlines()
+index = 0
 for line in lines:
 	
 	minus_list = [-1]*275
@@ -20,8 +21,9 @@ for line in lines:
 	else:
 		mb = 'B'
 	
-	result_string=mb+', '+str(minus_list).strip('[]')
+	result_string=mb+', '+str(minus_list).strip('[]')+', '+str(index)
 	# result_string=mb+', '+str(minus_list).strip('[]')+', '+file_name
 
 	print(result_string)
+	index += 1
 
