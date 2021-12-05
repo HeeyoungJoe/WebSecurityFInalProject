@@ -1,6 +1,7 @@
 import csv
 f = open('./data.libsvm', 'r')
 
+index = 0
 lines = f.readlines()
 for line in lines:
 
@@ -18,6 +19,7 @@ for line in lines:
 	if int(l[0]) == 1:
 		mb = 'M'
 		
-		result_string = mb+', '+str(minus_list).strip('[]')
+		result_string = mb+', '+str(minus_list).strip('[]')+', '+index
+		index += 1
 		# result_string = mb+', '+str(minus_list).strip('[]')+', '+file_name
 		print(result_string)	
