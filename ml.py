@@ -63,13 +63,22 @@ def parse_train(trainpath,ratio,limit):
     data=pd.read_csv(trainpath)
     data=data.to_numpy()
     
+    if data.ndim<=1:
+        return data[0],data[1:-1],data[-1]
+    
     np.random.shuffle(data)
-    data=data[:limit]
+    if data.ndim==2:
+        r,c=data.shape
+        if r>limit:
+            data=data[:limit]
+    
     X,Y,name=column_slice(data)
     
-    r,c=X.shape
     count=int((1-ratio)*r)
-
+    print("\n******************************")
+    print("\nCheck Parsed Result:")
+    print("\nX:",X.shape,"\tY:",Y.shape)
+    print("\n******************************")
     return count,X,Y,name
 
 #tsne and pca
@@ -196,17 +205,17 @@ def print_result(pred,name):
 #%%
 if __name__=="__main__":
     #debug
-    testpath=None
-    trainpath="./pdf2csv/output.csv"#훈련
+    testpath=None#fix it as None
+    trainpath="./chang_kim/output_test.csv"#훈련
     print("~~~~~~~~~~~~~~~~~~~~~~~~~SVM~~~~~~~~~~~~~~~~~~~~~~~~")
     pred_tsne,pred_pca,name=runSVC(trainpath,testpath) #accuacy print
     print("~~~~~~~~~~~~~~~~~~~~~~~~~RF~~~~~~~~~~~~~~~~~~~~~~~~")
     predrf,name=runRF(trainpath,testpath) #accucacy print
     
     
-    #print_result(pred_tsne,name)
-    #print_result(pred_pca,name)
-    #print_result(predrf,name)
+    print_result(pred_tsne,name)
+    print_result(pred_pca,name)
+    print_result(predrf,name)
     
     #웹용_
   
