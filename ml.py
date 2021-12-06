@@ -1,4 +1,5 @@
 #%%
+from numpy.typing import _32Bit
 import pandas as pd
 import numpy as np
 from os import listdir
@@ -18,6 +19,9 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import pickle
+
+limit=100000
+percent=0.3
 #%%
 def column_slice(data):
     X=data[:,1:-1]
@@ -36,7 +40,9 @@ def parse(testpath,trainpath,limit):
     np.random.shuffle(traindata)
     
     #자르기
-    traindata=traindata[:limit]
+    r,c=traindata.shape
+    if limit<r:
+        traindata=traindata[:limit]
     trainX,trainY,trainname=column_slice(traindata)
     
     ###########TEST##############
@@ -74,12 +80,11 @@ def parse_train(trainpath,ratio,limit):
     
     X,Y,name=column_slice(data)
     
-    count=int((1-ratio)*r)
-    print("\n******************************")
-    print("\nCheck Parsed Result:")
-    print("\nX:",X.shape,"\tY:",Y.shape)
-    print("\n******************************")
-    return count,X,Y,name
+    # print("\n******************************")
+    # print("\nCheck Parsed Result:")
+    # print("\nX:",X.shape,"\tY:",Y.shape)
+    # print("\n******************************")
+    return X,Y,name
 
 #tsne and pca
 #input: batched data
@@ -87,11 +92,17 @@ def parse_train(trainpath,ratio,limit):
 def make_2D(x):
     #x: row, feature size
     
+    #print("\n***size previous to make2D***\t",x.shape)
+    r,c=x.shape
+    if r==0:
+        x=np.reshape(x,(1,x.size))
+    
+    
     #t-sne
-    print("\n\nTSNE preparing...")
-    tsne=TSNE(n_components=2,learning_rate='auto',init='random')
+    #print("\n\nTSNE preparing...")
+    tsne=TSNE(n_components=2,learning_rate='auto', init='random')
     #pca
-    print("\n\nPCA preparing...")
+    #print("\n\nPCA preparing...")
     pca=PCA(n_components=2)
     
     result_t=tsne.fit_transform(x)
@@ -116,7 +127,7 @@ def print_2D(title,x,y):
     if y.shape!=(len(y),1):
         y=y.reshape((len(y),1))
     
-    print("\n\nshape of x:",x.shape,"\nshape of y:",y.shape)
+    #print("\n\nshape of x:",x.shape,"\nshape of y:",y.shape)
 
     data=pd.DataFrame(np.concatenate((x,y),axis=1),columns=['pc1','pc2','target'])
 
@@ -129,7 +140,6 @@ def print_2D(title,x,y):
 def try_simple_SVC(x,y):
     svc=SVC(kernel="rbf",degree=3,gamma="scale")
     svc.fit(x,y)  
-    print("\n|||SVC well fit")
     return svc
 
 def try_simple_rf(x,y):
@@ -137,49 +147,51 @@ def try_simple_rf(x,y):
     rf.fit(x,y)
     return rf
 #%%
-def row_slice(x,y,count):
+def row_slice(x,y,percent):
+    count=int(y.size*percent)
     trainX=x[:count]
     trainY=y[:count]
     testX=x[count:]
     testY=y[count:]
     return trainX,trainY,testX,testY
 def runRF(trainpath,testpath):
-    limit=1000
+
     if testpath==None:
-        count,X,Y,name=parse_train(trainpath,0.3,limit)
+        X,Y,name=parse_train(trainpath,0.3,limit)
     else:
-        count,X,Y,name=parse(trainpath,testpath,limit)
+        tr_r,X,Y,name=parse(trainpath,testpath,limit)
     #without 2D
-    trainX,trainY,testX,testY=row_slice(X,Y,count)
+    trainX,trainY,testX,testY=row_slice(X,Y,percent)
     rf=try_simple_rf(trainX,trainY)
+    pred=rf.predict(testX)
     
     if testpath==None:
-        print("\n|||Accuracy on RF:\t",accuracy_score(testY,pred))
+        print("\n|||Accuracy for \n|||RF:\t",accuracy_score(testY,pred))
     
-    return model,pred,name
+    return rf,pred,name
 
 def final(trainpath):
     data=pd.read_csv(trainpath).to_numpy()
     trainX=data[:,1:-1]
     trainY=data[:,0]
     name=data[:,-1]
+ 
     rf=try_simple_rf(trainX,trainY)
     
     return rf,name
-    
+  
 def runSVC(trainpath,testpath):
-    limit=1000
+
     if testpath==None:
-        count,X,Y,name=parse_train(trainpath,0.3,limit)
+        X,Y,name=parse_train(trainpath,0.3,limit)
     else:
-        count,X,Y,name=parse(testpath,trainpath,limit)
+        tr_r,X,Y,name=parse(testpath,trainpath,limit)
     
-    print("\n|||Count:",count)
     tsne_x,pca_x=make_2D(X)
-    print("\n|||make 2d result",tsne_x.shape,pca_x.shape)
+    #print("\n|||make 2d result",tsne_x.shape,pca_x.shape)
     #cut train and test
-    train_tsne_x,train_tsne_y,test_tsne_x,test_tsne_y=row_slice(tsne_x,Y,count)
-    train_pca_x,train_pca_y,test_pca_x,test_pca_y=row_slice(pca_x,Y,count)
+    train_tsne_x,train_tsne_y,test_tsne_x,test_tsne_y=row_slice(tsne_x,Y,percent)
+    train_pca_x,train_pca_y,test_pca_x,test_pca_y=row_slice(pca_x,Y,percent)
 
     
     tsneSVC=try_simple_SVC(train_tsne_x,train_tsne_y)
@@ -188,14 +200,14 @@ def runSVC(trainpath,testpath):
     pred_tsne=tsneSVC.predict(test_tsne_x)
     pred_pca=pcaSVC.predict(test_pca_x)
     
-    print("\n|||prediction done")
-    print("\n|||pred_tsne result",pred_tsne.shape)
-    print("\n|||pred_pca result",pred_pca.shape)
+    #print("\n|||prediction done")
+    #print("\n|||pred_tsne result",pred_tsne.shape)
+    #print("\n|||pred_pca result",pred_pca.shape)
     
     if testpath==None:
         acc1=accuracy_score(test_tsne_y,pred_tsne)
         acc2=accuracy_score(test_pca_y,pred_pca)
-        print("\n|||accucacy for \n|||tsne \t%f\n|||pca \t%f\n"%(acc1,acc2))
+        print("\n|||Accucacy for \n|||tsne \t%f\n|||pca \t%f\n"%(acc1,acc2))
     
     return pred_tsne,pred_pca,name
 
@@ -204,23 +216,23 @@ def print_result(pred,name):
         print("\n|||Doc[",na,"]\tis classified as\t[",pr,"]")
 #%%
 if __name__=="__main__":
-    #debug
+    """ #debug
     testpath=None#fix it as None
-    trainpath="./chang_kim/output_test.csv"#훈련
+    trainpath="./chang_kim/output.csv"#훈련
     print("~~~~~~~~~~~~~~~~~~~~~~~~~SVM~~~~~~~~~~~~~~~~~~~~~~~~")
     pred_tsne,pred_pca,name=runSVC(trainpath,testpath) #accuacy print
     print("~~~~~~~~~~~~~~~~~~~~~~~~~RF~~~~~~~~~~~~~~~~~~~~~~~~")
-    predrf,name=runRF(trainpath,testpath) #accucacy print
+    model,predrf,name=runRF(trainpath,testpath) #accucacy print
+     """
     
-    
-    print_result(pred_tsne,name)
-    print_result(pred_pca,name)
-    print_result(predrf,name)
+    #print_result(pred_tsne,name)
+    #print_result(pred_pca,name)
+    #print_result(predrf,name)
     
     #웹용_
   
         
-    trainpath="./pdf2csv/output.csv"
+    trainpath="./chang_kim/output_del.csv"
     rf_model,name=final(trainpath)#모델
 
     filename="finalized_model.sav"

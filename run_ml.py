@@ -1,6 +1,6 @@
 import sys
 sys.path.insert(1, './')
-from ml import final,print_result
+from ml import final,print_result,column_slice
 import pandas as pd
 import pickle
 from os import listdir
@@ -8,7 +8,7 @@ from os import listdir
 ############load model################
 #to print pretty
 pdfpath=sys.argv[2]
-directory_list=os.listdr(pdfpath)
+directory_list=os.listdir(pdfpath)
 #linux
 folderpath="/home/dori/hidost/build"
 
