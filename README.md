@@ -25,11 +25,6 @@
 역할: ML 모델을 훈련시킬때 사용될 파일 (test를 위해 6개의 파일들을 빼놓은 csv파일)<br>
 <h2>libsvm_to_csv.py</h2>
 역할: training csv 파일을 만들 때 사용된 python 코드<br>
-
-<h1>Use of code</h1>
-
-
-
 <h2>libsvm_to_csv2.py</h2>
 역할: 사용자가 업로드한 파일을 csv파일로 parsing하기 위해 사용된 python 코드<br>
 <h2>pdf_to_libsvm.py</h2>
@@ -42,126 +37,121 @@
 <h4>Pre-processing>
 <h5>parse(traindata_path,testdata_path,limit)</h5><br>
 input: <br>
-traindata_path (str): path to traindata csv file
-testdata_path (str): path to testdata csv file
-limit (int): cut data if exceeds limit
+      - traindata_path (str): path to traindata csv file<br>
+      - testdata_path (str): path to testdata csv file<br>
+      - limit (int): cut data if exceeds limit<br>
 
 returns:<br>
-tr_r (int): index separating train and test data
-totalX (numpy array, 2-dim):input data
-totalY(numpy array, 1-dim): target data
-totalName(numpy array 1-dim): file index
+      - tr_r (int): index separating train and test data<br>
+      - totalX (numpy array, 2-dim):input data<br>
+      - totalY(numpy array, 1-dim): target data<br>
+      - totalName(numpy array 1-dim): file index<br>
 
 <h5>parse_train(data_path,ratio,limit)</h5>
 input:<br>
-data_path (str): path to data csv file
-ratio (float): ratio of train data
-limit (int): cut data if exceeds limit
+      - data_path (str): path to data csv file<br>
+      - ratio (float): ratio of train data<br>
+      - limit (int): cut data if exceeds limit<br>
 
 returns:<br>
-X (numpy array, 2-dim):input data
-Y (numpy array, 1-dim): target data
-name(numpy array 1-dim): file index
+      - X (numpy array, 2-dim):input data<br>
+      - Y (numpy array, 1-dim): target data<br>
+      - name(numpy array 1-dim): file index<br>
 
 <h5>column_slice(data)</h5>
 input:<br>
-data (numpy array, 2-dim): csv data read into a numpy array without X, Y, index separation
+      - data (numpy array, 2-dim): csv data read into a numpy array without X, Y, index separation<br>
 
 returns:<br>
-X (numpy array, 2-dim):input data
-Y (numpy array, 1-dim): target data
-name(numpy array 1-dim): file index
+      - X (numpy array, 2-dim):input data<br>
+      - Y (numpy array, 1-dim): target data<br>
+      - name(numpy array 1-dim): file index<br>
 
 <h5>row_slice(X,y,percent)</h5>
 input:<br>
-X (numpy array, 2-dim):input data
-Y (numpy array, 1-dim): target data
-percent (float): train data ratio
+      - X (numpy array, 2-dim):input data<br>
+      - Y (numpy array, 1-dim): target data<br>
+      - percent (float): train data ratio<br>
 
 returns:<br>
-trainX (numpy array, 2-dim): train input data
-trainY (numpy array, 1-dim): target data
-testX (numpy array, 2-dim): testinput data
-testY (numpy array, 1-dim): target data
+      - trainX (numpy array, 2-dim): train input data<br>
+      - trainY (numpy array, 1-dim): target data<br>
+      - testX (numpy array, 2-dim): testinput data<br>
+      - testY (numpy array, 1-dim): target data<br>
 
 <h4>Machine-learning</h4>
 <h5>make_2D(x)</h5>
 input:<br>
-x (numpy array, 2-dim): input data
+      - x (numpy array, 2-dim): input data<br>
 
 output:<br>
-result_t, result_p (numpy array, 2-dim): array of size (number of rows in the original data )* 2 that is either reduced with t-SNE or PCA
+      - result_t, result_p (numpy array, 2-dim): array of size (number of rows in the original data )* 2 that is either reduced with t-SNE or PCA<br>
 
 <h5>try_simple_SVC(X,Y)</h5>
 input:<br>
-X (numpy array, 2-dim):input data
-Y (numpy array, 1-dim): target data
+      - X (numpy array, 2-dim):input data<br>
+      - Y (numpy array, 1-dim): target data<br>
 
 output:<br>
-svc (sklearn SVC model): model fitted with X and Y
+      - svc (sklearn SVC model): model fitted with X and Y<br>
 
 <h5>try_simple_rf(x)</h5>
 input:<br>
-X (numpy array, 2-dim):input data
+      - X (numpy array, 2-dim):input data<br>
 
 output:<br>
-rf (sklearn RF model): model fitted with X 
+      - rf (sklearn RF model): model fitted with X <br>
 
 <h5>runSVC(x,y)</h5>
 input:<br>
-X (numpy array, 2-dim):input data
-Y (numpy array, 1-dim): target data
+      - X (numpy array, 2-dim):input data<br>
+      - Y (numpy array, 1-dim): target data<br>
 
 output:<br>
-pred_tsne (numpy array, 1-dim): test prediction result with tsne input fed SVC
-pred_pca (numpy array, 1-dim): test prediction result with pca input fed SVC
-name(numpy array, 1-dim): file name array
+      - pred_tsne (numpy array, 1-dim): test prediction result with tsne input fed SVC<br>
+      - pred_pca (numpy array, 1-dim): test prediction result with pca input fed SVC<br>
+      - name(numpy array, 1-dim): file name array<br>
 
 <h5>runRF(x,y)</h5>
 input: <br>
-X (numpy array, 2-dim):input data
-Y (numpy array, 1-dim): target data
+      - X (numpy array, 2-dim):input data<br>
+      - Y (numpy array, 1-dim): target data<br>
 
 output:<br>
-rf (sklearn RF model): fitted model
-pred (numpy array, 1-dim): test prediction result with rf
-name(numpy array, 1-dim): file name array
+      - rf (sklearn RF model): fitted model<br>
+      - pred (numpy array, 1-dim): test prediction result with rf<br>
+      - name(numpy array, 1-dim): file name array<br>
 
 <h5>final(trainpath) </h5>
 input:<br>
-trainpath (str): train data file path. No splitting of data for testing
+      - trainpath (str): train data file path. No splitting of data for testing<br>
 
 return:<br>
-rf (sklearn RF model): fitted model
-
+      - rf (sklearn RF model): fitted model<br>
 
 <h4>Presentation</h4>
 <h5>print_result(pred, name)</h5>
 input:<br>
-pred (numpy array, 1-dim): prediction result array
-name (numpy array, 1-dim): file name array
+      - pred (numpy array, 1-dim): prediction result array<br>
+      - name (numpy array, 1-dim): file name array<br>
 
 return:<br>
-void
+      - void<br>
 
 <h5>print_2D(title,X,y)</h5>
 input:<br>
-title (str): title of the graph
-X (numpy array, 2-dim):input data
-Y (numpy array, 1-dim): target data
+      - title (str): title of the graph<br>
+      - X (numpy array, 2-dim):input data<br>
+      - Y (numpy array, 1-dim): target data<br>
 
 return:<br>
-void
+      - void<br>
 
 
 
-<h1>Use of code</h1>
 <h2>run_ml.py</h2>
-
 역할: 웹에서 최종으로 선택된 pre-processed classifier algorithm 모델을 이용해 바로 prediction을 얻을 수 있는 ml 모델 코드<br>
-
 <h2>ls.sh</h2>
 역할: 웹에서 업로드되어 /dataset/input 폴더에 저장된 bulk 파일을 unzip 하여 해당 directory에 압축을 풀어주고, bulk파일을 삭제하는 코드<br>
-
 <h2>pdf_to libsvm.sh</h2>
 역할: /dataset/input 내부에 저장된 pdf들의 feature를 추출하고 libsvm_to_csv2.py를 실행하여 output_test.csv 파일로 파싱하고, 해당 csv 파일을 run_ml.py의 훈련 모델을 통해 예측값을 얻을 수 있는 코드
