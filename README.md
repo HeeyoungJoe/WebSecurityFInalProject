@@ -10,7 +10,7 @@
 역할: output.csv와 다른 수의 column을 가지고 있는 csv파일<br>
 (500개 이상의 파일들이 가지고 있는 features)<br>
 
-<h1>build폴더</h1>
+<h1>build 폴더</h1>
 <h2>bpdfs.txt & mpdfs.txt</h2>
 역할: training file을 만들때 사용된 전체 파일의 경로 텍스트 파일<br>
 <h2>pdfs.txt & test.txt</h2>
@@ -25,7 +25,9 @@
 역할: ML 모델을 훈련시킬때 사용될 파일 (test를 위해 6개의 파일들을 빼놓은 csv파일)<br>
 <h2>libsvm_to_csv.py</h2>
 역할: training csv 파일을 만들 때 사용된 python 코드<br>
-함수:<br>
+
+<h1>Use of code</h1>
+
 
 
 <h2>libsvm_to_csv2.py</h2>
@@ -55,6 +57,7 @@ input:<br>
 data_path (str): path to data csv file
 ratio (float): ratio of train data
 limit (int): cut data if exceeds limit
+
 returns:<br>
 X (numpy array, 2-dim):input data
 Y (numpy array, 1-dim): target data
@@ -69,7 +72,7 @@ X (numpy array, 2-dim):input data
 Y (numpy array, 1-dim): target data
 name(numpy array 1-dim): file index
 
-<h5>row_slice(X,y,percent)
+<h5>row_slice(X,y,percent)</h5>
 input:<br>
 X (numpy array, 2-dim):input data
 Y (numpy array, 1-dim): target data
@@ -82,14 +85,14 @@ testX (numpy array, 2-dim): testinput data
 testY (numpy array, 1-dim): target data
 
 <h4>Machine-learning</h4>
-<h5>make_2D(x)
+<h5>make_2D(x)</h5>
 input:<br>
 x (numpy array, 2-dim): input data
 
 output:<br>
 result_t, result_p (numpy array, 2-dim): array of size (number of rows in the original data )* 2 that is either reduced with t-SNE or PCA
 
-<h5>try_simple_SVC(X,Y)
+<h5>try_simple_SVC(X,Y)</h5>
 input:<br>
 X (numpy array, 2-dim):input data
 Y (numpy array, 1-dim): target data
@@ -97,14 +100,14 @@ Y (numpy array, 1-dim): target data
 output:<br>
 svc (sklearn SVC model): model fitted with X and Y
 
-<h5>try_simple_rf(x)
+<h5>try_simple_rf(x)</h5>
 input:<br>
 X (numpy array, 2-dim):input data
 
 output:<br>
 rf (sklearn RF model): model fitted with X 
 
-<h5>runSVC(x,y)
+<h5>runSVC(x,y)</h5>
 input:<br>
 X (numpy array, 2-dim):input data
 Y (numpy array, 1-dim): target data
@@ -114,7 +117,7 @@ pred_tsne (numpy array, 1-dim): test prediction result with tsne input fed SVC
 pred_pca (numpy array, 1-dim): test prediction result with pca input fed SVC
 name(numpy array, 1-dim): file name array
 
-<h5>runRF(x,y)
+<h5>runRF(x,y)</h5>
 input: <br>
 X (numpy array, 2-dim):input data
 Y (numpy array, 1-dim): target data
@@ -124,7 +127,7 @@ rf (sklearn RF model): fitted model
 pred (numpy array, 1-dim): test prediction result with rf
 name(numpy array, 1-dim): file name array
 
-<h5>final(trainpath) 
+<h5>final(trainpath) </h5>
 input:<br>
 trainpath (str): train data file path. No splitting of data for testing
 
@@ -133,7 +136,7 @@ rf (sklearn RF model): fitted model
 
 
 <h4>Presentation</h4>
-<h5>print_result(pred, name)
+<h5>print_result(pred, name)</h5>
 input:<br>
 pred (numpy array, 1-dim): prediction result array
 name (numpy array, 1-dim): file name array
@@ -141,7 +144,7 @@ name (numpy array, 1-dim): file name array
 return:<br>
 void
 
-<h5>print_2D(title,X,y)
+<h5>print_2D(title,X,y)</h5>
 input:<br>
 title (str): title of the graph
 X (numpy array, 2-dim):input data
@@ -149,8 +152,10 @@ Y (numpy array, 1-dim): target data
 
 return:<br>
 void
-Use of code
 
+
+
+<h1>Use of code</h1>
 <h2>run_ml.py</h2>
 
 역할: 웹에서 최종으로 선택된 pre-processed classifier algorithm 모델을 이용해 바로 prediction을 얻을 수 있는 ml 모델 코드<br>
