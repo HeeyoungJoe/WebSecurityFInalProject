@@ -24,4 +24,5 @@ data=pd.read_csv(testpath).to_numpy()
 x,y,name=column_slice(data) #ml.py
 #last, run model
 pred=model.predict(x)
+directory_list.sort()
 print_result(pred,directory_list)

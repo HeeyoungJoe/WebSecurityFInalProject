@@ -1,4 +1,4 @@
-#%%
+ 
 from numpy.typing import _32Bit
 import pandas as pd
 import numpy as np
@@ -20,14 +20,23 @@ from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import pickle
 
-limit=100000
+limit=1000000
 percent=0.3
-#%%
+ 
 def column_slice(data):
     X=data[:,1:-1]
     Y=data[:,0] 
     name=data[:,-1]
     return X,Y,name
+
+def row_slice(x,y,percent):
+    count=int(y.size*percent)
+    trainX=x[:count]
+    trainY=y[:count]
+    testX=x[count:]
+    testY=y[count:]
+    return trainX,trainY,testX,testY
+
 def parse(testpath,trainpath,limit): 
     #test set과 train set을 모두 파싱한다
     #둘의 열 수가 동일한지 확인한다. 
@@ -80,34 +89,29 @@ def parse_train(trainpath,ratio,limit):
     
     X,Y,name=column_slice(data)
     
-    # print("\n******************************")
-    # print("\nCheck Parsed Result:")
-    # print("\nX:",X.shape,"\tY:",Y.shape)
-    # print("\n******************************")
     return X,Y,name
-
+ 
 #tsne and pca
 #input: batched data
 #output: tsne, pca model
 def make_2D(x):
     #x: row, feature size
     
-    #print("\n***size previous to make2D***\t",x.shape)
     r,c=x.shape
     if r==0:
         x=np.reshape(x,(1,x.size))
     
-    
     #t-sne
-    #print("\n\nTSNE preparing...")
     tsne=TSNE(n_components=2,learning_rate='auto', init='random')
     #pca
-    #print("\n\nPCA preparing...")
     pca=PCA(n_components=2)
     
     result_t=tsne.fit_transform(x)
     result_p=pca.fit_transform(x)
     
+    print("\n|||The reduced results show shape of:",result_t.shape,result_p.shape)
+    print(result_p)
+    print(result_t)
     return result_t,result_p #결과 줌
 
 def print_2D(title,x,y):
@@ -126,8 +130,6 @@ def print_2D(title,x,y):
     
     if y.shape!=(len(y),1):
         y=y.reshape((len(y),1))
-    
-    #print("\n\nshape of x:",x.shape,"\nshape of y:",y.shape)
 
     data=pd.DataFrame(np.concatenate((x,y),axis=1),columns=['pc1','pc2','target'])
 
@@ -146,14 +148,8 @@ def try_simple_rf(x,y):
     rf=RandomForestClassifier(n_estimators=5,random_state=0)
     rf.fit(x,y)
     return rf
-#%%
-def row_slice(x,y,percent):
-    count=int(y.size*percent)
-    trainX=x[:count]
-    trainY=y[:count]
-    testX=x[count:]
-    testY=y[count:]
-    return trainX,trainY,testX,testY
+ 
+
 def runRF(trainpath,testpath):
 
     if testpath==None:
@@ -170,15 +166,7 @@ def runRF(trainpath,testpath):
     
     return rf,pred,name
 
-def final(trainpath):
-    data=pd.read_csv(trainpath).to_numpy()
-    trainX=data[:,1:-1]
-    trainY=data[:,0]
-    name=data[:,-1]
- 
-    rf=try_simple_rf(trainX,trainY)
-    
-    return rf,name
+
   
 def runSVC(trainpath,testpath):
 
@@ -186,9 +174,9 @@ def runSVC(trainpath,testpath):
         X,Y,name=parse_train(trainpath,0.3,limit)
     else:
         tr_r,X,Y,name=parse(testpath,trainpath,limit)
-    
+    #reduce x to 2-dim
     tsne_x,pca_x=make_2D(X)
-    #print("\n|||make 2d result",tsne_x.shape,pca_x.shape)
+    
     #cut train and test
     train_tsne_x,train_tsne_y,test_tsne_x,test_tsne_y=row_slice(tsne_x,Y,percent)
     train_pca_x,train_pca_y,test_pca_x,test_pca_y=row_slice(pca_x,Y,percent)
@@ -200,10 +188,6 @@ def runSVC(trainpath,testpath):
     pred_tsne=tsneSVC.predict(test_tsne_x)
     pred_pca=pcaSVC.predict(test_pca_x)
     
-    #print("\n|||prediction done")
-    #print("\n|||pred_tsne result",pred_tsne.shape)
-    #print("\n|||pred_pca result",pred_pca.shape)
-    
     if testpath==None:
         acc1=accuracy_score(test_tsne_y,pred_tsne)
         acc2=accuracy_score(test_pca_y,pred_pca)
@@ -211,29 +195,42 @@ def runSVC(trainpath,testpath):
     
     return pred_tsne,pred_pca,name
 
+def final(trainpath):
+    data=pd.read_csv(trainpath).to_numpy()
+    trainX=data[:,1:-1]
+    trainY=data[:,0]
+    name=data[:,-1]
+ 
+    rf=try_simple_rf(trainX,trainY)
+    
+    return rf,name
+
 def print_result(pred,name):
     for pr,na in zip(pred,name):
         print("\n|||Doc[",na,"]\tis classified as\t[",pr,"]")
-#%%
+
+ 
 if __name__=="__main__":
-    """ #debug
+    #모델들의 정확도를 비교하기 위한 코드
+    #test dataset이 별도의 경로에 저장되어있지 않아
+    #rain path만 지정해준다.
+    #run~라는 함수들에서 testpath가 None으로 되어있다면 train dataset을
+    #분할해서 accuracy를 저장해준다. 
     testpath=None#fix it as None
-    trainpath="./chang_kim/output.csv"#훈련
+    trainpath="./chang_kim/output3.csv"#훈련 데이터
     print("~~~~~~~~~~~~~~~~~~~~~~~~~SVM~~~~~~~~~~~~~~~~~~~~~~~~")
-    pred_tsne,pred_pca,name=runSVC(trainpath,testpath) #accuacy print
+    pred_tsne,pred_pca,name=runSVC(trainpath,testpath) #accuacy 
     print("~~~~~~~~~~~~~~~~~~~~~~~~~RF~~~~~~~~~~~~~~~~~~~~~~~~")
-    model,predrf,name=runRF(trainpath,testpath) #accucacy print
-     """
+    model,predrf,name=runRF(trainpath,testpath) #accucacy print 
+
+ 
     
-    #print_result(pred_tsne,name)
-    #print_result(pred_pca,name)
-    #print_result(predrf,name)
-    
-    #웹용_
-  
-        
+    #웹용 모델 저장
+    #output del은 웹에서 실습을 하기 위해 6개의 row를 제외한 것
     trainpath="./chang_kim/output_del.csv"
     rf_model,name=final(trainpath)#모델
-
+    
     filename="finalized_model.sav"
     pickle.dump(rf_model,open(filename,'wb'))
+
+    
